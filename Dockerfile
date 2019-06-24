@@ -1,5 +1,5 @@
 FROM phusion/baseimage:0.9.18
-MAINTAINER MagicDude4Eva, https://github.com/magicdude4eva/docker-smokeping
+MAINTAINER mad_ady, https://github.com/mad-ady/docker-smokeping
 
 # ========================================================================================
 # ====== PhantomJS
@@ -89,7 +89,7 @@ RUN mkdir /var/run/smokeping
 
 # Update Smokeping
 RUN \
-    curl -L -o /tmp/smokeping.zip https://github.com/oetiker/SmokePing/archive/master.zip \
+    curl -L -o /tmp/smokeping.zip https://github.com/mad-ady/SmokePing/archive/master.zip \
 &&  cd /tmp \
 &&  unzip -o smokeping.zip \
 &&  cp /tmp/SmokePing-master/bin/smokeping_cgi /usr/share/smokeping/smokeping.cgi \
@@ -107,11 +107,19 @@ RUN \
 RUN \
     curl -L -o /usr/share/perl5/Smokeping/probes/speedtest.pm https://github.com/mad-ady/smokeping-speedtest/raw/master/speedtest.pm
 
+# Download and copy Youtube-DL - https://github.com/mad-ady/smokeping-youtube-dl
+RUN \
+    curl -L -o /usr/share/perl5/Smokeping/probes/YoutubeDL.pm https://github.com/mad-ady/smokeping-youtube-dl/raw/master/YoutubeDL.pm
+
 # Download and copy speedtest-cli - https://github.com/sivel/speedtest-cli
 RUN \
     curl -L -o /usr/local/bin/speedtest-cli https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py \
 &&  chmod a+x /usr/local/bin/speedtest-cli
 
+# Download and copy youtube-dl - https://github.com/ytdl-org/youtube-dl/blob/master/README.md
+RUN \
+    curl -L -o /usr/local/bin/youtube-dl https://yt-dl.org/downloads/latest/youtube-dl \
+&&  chmod a+x /usr/local/bin/youtube-dl
 
 # ========================================================================================
 # Adjust syslog-ng / cleanup
