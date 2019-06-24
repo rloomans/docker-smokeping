@@ -1,26 +1,22 @@
-# magicdude4eva/smokeping
-[![](https://images.microbadger.com/badges/image/magicdude4eva/smokeping.svg)](https://microbadger.com/images/magicdude4eva/smokeping "Get your own image badge on microbadger.com")[![](https://images.microbadger.com/badges/version/magicdude4eva/smokeping.svg)](https://microbadger.com/images/magicdude4eva/smokeping "Get your own version badge on microbadger.com")
-
-[paypal]: https://paypal.me/GerdNaschenweng
-![paypal](https://img.shields.io/badge/PayPal--ffffff.svg?style=social&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8%2F9hAAAABHNCSVQICAgIfAhkiAAAAZZJREFUOI3Fkb1PFFEUxX%2F3zcAMswFCw0KQr1BZSKUQYijMFibGkhj9D4zYYAuU0NtZSIiNzRZGamqD%2BhdoJR%2FGhBCTHZ11Pt%2B1GIiEnY0hFNzkFu%2FmnHPPPQ%2Buu%2BTiYGjy0ZPa5N1t0SI5m6mITeP4%2B%2FGP%2Fbccvto8j3cuCsQTSy%2FCzLkdxqkXpoUXJoUXJrkfFTLMwHiDYLrFz897Z3jT6ckdBwsiYDMo0tNOIGuBqS%2Beh7sdAkU2g%2BkBFGkd%2FrtSgD8Z%2BrBxj68MAGG1A9efRhVsXrKMU7Y4cNyGOwtDU28OtrqdUMetldvzFKxCYSHJ4NsJ%2BnRJGexHba7VJ%2FTff4BaQFBjVcbqIEZ1bESYn4PRUcHx2N952awUkOHZedUcWm14%2FtjqjREHawUEsgx6Ajg5%2Bsi7jWqBwA%2BmIrXlo9YHUVTmEP%2F6hOO1Ofiyy3pjo%2BsvBDX%2FZpSakhz4BqvQDvdYvrXQEXZViI5rPpBEOwR2l16vtN7bd9SN3L1WXj%2BjGSnN38rq%2B7VL8xXQOdDF%2F0KvXn8BlbuY%2FvUAHysAAAAASUVORK5CYII%3D)
-___
-:beer: **Please support me**: Although all my software is free, it is always appreciated if you can support my efforts on Github with a [contribution via Paypal][paypal] - this allows me to write cool projects like this in my personal time and hopefully help you or your business. 
-___
+# mad-ady/smokeping - based on magicdud4eva/smokeping
 
 Smokeping keeps track of your network latency. For a full example of what this application is capable of visit [UCDavis](http://smokeping.ucdavis.edu/cgi-bin/smokeping.fcgi). The Smokeping Docker image includes the latest version of Smokeping, speedtest-cli and PhantomJS.
 
 ![Smokeping Docker](https://github.com/magicdude4eva/docker-smokeping/raw/master/docker-smokeping.png)
 
 ## TL;DR - Features
-* Latest version of Smokeping (https://github.com/oetiker/SmokePing)
+* Private Smokeping branch (https://github.com/mad-ady/SmokePing)
 * Speedtest probe (https://github.com/mad-ady/smokeping-speedtest / https://github.com/sivel/speedtest-cli)
+* Youtube-dl probe (https://github.com/mad-ady/smokeping-youtube-dl)
 * PhantomJS (http://phantomjs.org/)
 * Working configuration for DNS, Speedtest and web-site probes
+* Ability to run as a slave
 
 [![smokeping](http://oss.oetiker.ch/smokeping/inc/smokeping-logo.png)][smokeurl]
 [smokeurl]: http://oss.oetiker.ch/smokeping/
 
 ## Usage
+Run standalone:
 
 ```
 docker create \
@@ -30,9 +26,21 @@ docker create \
     -e TZ=<timezone> \
     -v <path/to/smokeping/data>:/data \
     -v <path/to/smokeping/config>:/config \
-    magicdude4eva/smokeping
+    madady/smokeping
 ```
 
+Run as a slave:
+```
+docker create \
+    --name smokeping \
+    -e PUID=<UID> -e PGID=<GID> \
+    -e TZ=<timezone> \
+    -e MASTERURL=<http://user:pass@master.server.url/smokeping/smokeping.fcgi>
+    -v <path/to/smokeping/data>:/data \
+    -v <path/to/smokeping/config>:/config \
+    -v <path/to/secrets>:/config/secret \
+    madady/smokeping
+```
 
 ## Parameters
 
@@ -45,9 +53,12 @@ http://192.168.x.x:9500 would show you what's running INSIDE the container on po
 * `-p 80` - the port for the webUI
 * `-v /data` - Storage location for db and application data (graphs etc)
 * `-v /config` - Configure the `Targets` file here
+* `-v /config/secret` - File holding the slave secret (used when running as a slave)
 * `-e PGID` for for GroupID - see below for explanation
 * `-e PUID` for for UserID - see below for explanation
 * `-e TZ` for timezone setting, eg Africa/Johannesburg
+* `-e MASTERURL` for a URL to the master instance (causes this container to be a slave)
+
 
 This container is based on phusion/baseimage and includes the latest build of PhantomJS. For shell access whilst the container is running do `docker exec -it smokeping /bin/bash`.
 
@@ -72,22 +83,3 @@ Wait 10 minutes.
 
 * To monitor the logs of the container in realtime `docker logs -f smokeping`.
 
-
-**Version**
-
-+ **09.12.16:** First release.
-
-## Donations are always welcome
-If this helped you in any way, you can always leave me a tip at
-```
-(Ripple) rPz4YgyxPpk7xqQQ9P7CqNFvK17nhBdfoy
-(BTC)    1Mhq9SY6DzPhs7PNDx7idXFDWsGtyn7GWM
-(ETH)    0xb0f2d091dcdd036cd26017bb0fbd6c1488fc8d04
-(LTC)    LTfP7yJSpGFvuPqjSEKaqcjue6KSA9118y
-(XVG)    D5nBpFBaD6vmVJ5CBUhkz8E4SNWscf6pMu
-(BNB)    0xb0f2d091dcdd036cd26017bb0fbd6c1488fc8d04
-```
-
-Sign up to [Cointracking](https://cointracking.info?ref=M263159) which uses APIs to connect to all exchanges and helps you with tax. Use [Binance Exchange](https://www.binance.com/?ref=13896895) to trade #altcoins. Join [TradingView](http://tradingview.go2cloud.org/aff_c?offer_id=2&aff_id=7432) to get trend-reports.
-
-If you are poor, follow me at least on [Twitter](https://twitter.com/gerdnaschenweng)!
