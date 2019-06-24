@@ -1,54 +1,54 @@
-FROM phusion/baseimage:0.9.18
+FROM phusion/baseimage:master
 MAINTAINER mad_ady, https://github.com/mad-ady/docker-smokeping
 
 # ========================================================================================
 # ====== PhantomJS
 # Dependencies we just need for building phantomjs
-ENV buildDependencies \
-    bison \
-    build-essential \
-    flex \
-    g++ \
-    git \
-    gperf \
-    libpng-dev \
-    libsqlite3-dev \
-    libssl-dev \
-    perl \
-    ruby \
-    unzip \
-    wget 
-
-# Dependencies we need for running phantomjs
-ENV phantomJSDependencies \
-    libfontconfig1-dev \
-    libfreetype6 \
-    libicu-dev \
-    libjpeg-dev \
-    openssl \
-    python
-  
-ENV phantomVersion 2.1.1
-
-# Compiling and installing PhantomJS
-RUN \
-    # Installing dependencies
-    apt-get update -yqq \
-&&  apt-get install -fyqq ${buildDependencies} ${phantomJSDependencies}\
-    # Downloading src, unzipping & removing zip
-&&  mkdir phantomjs \
-&&  cd phantomjs \
-&&  git clone https://github.com/ariya/phantomjs.git . \
-&&  git checkout ${phantomVersion} \
-&&  ./build.py --confirm --release --git-clean-qtbase --git-clean-qtwebkit \
-&&  cp bin/phantomjs /usr/bin/phantomjs \
-    # Removing build dependencies, clean temporary files
-&&  apt-get purge -yqq ${buildDependencies} \
-&&  apt-get autoremove -yqq \
-&&  apt-get clean \
-&&  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /phantomjs \
-    # Checking if phantom works
-&&  phantomjs -v
+#ENV buildDependencies \
+#    bison \
+#    build-essential \
+#    flex \
+#    g++ \
+#    git \
+#    gperf \
+#    libpng-dev \
+#    libsqlite3-dev \
+#    libssl-dev \
+#    perl \
+#    ruby \
+#    unzip \
+#    wget 
+#
+## Dependencies we need for running phantomjs
+#ENV phantomJSDependencies \
+#    libfontconfig1-dev \
+#    libfreetype6 \
+#    libicu-dev \
+#    libjpeg-dev \
+#    openssl \
+#    python
+#  
+#ENV phantomVersion 2.1.1
+#
+## Compiling and installing PhantomJS
+#RUN \
+#    # Installing dependencies
+#    apt-get update -yqq \
+#&&  apt-get install -fyqq ${buildDependencies} ${phantomJSDependencies}\
+#    # Downloading src, unzipping & removing zip
+#&&  mkdir phantomjs \
+#&&  cd phantomjs \
+#&&  git clone https://github.com/ariya/phantomjs.git . \
+#&&  git checkout ${phantomVersion} \
+#&&  ./build.py --confirm --release --git-clean-qtbase --git-clean-qtwebkit \
+#&&  cp bin/phantomjs /usr/bin/phantomjs \
+#    # Removing build dependencies, clean temporary files
+#&&  apt-get purge -yqq ${buildDependencies} \
+#&&  apt-get autoremove -yqq \
+#&&  apt-get clean \
+#&&  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /phantomjs \
+#    # Checking if phantom works
+#&&  phantomjs -v
 
 # ========================================================================================
 
