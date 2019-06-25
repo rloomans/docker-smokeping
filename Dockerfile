@@ -61,7 +61,7 @@ ENV DEBIAN_FRONTEND="noninteractive" HOME="/root" TERM="xterm" APACHE_LOG_DIR="/
 # Applying stuff
 RUN \
     apt-get update \
-&&  apt-get install -y apache2 fping smokeping ssmtp syslog-ng ttf-dejavu unzip \
+&&  apt-get install -y apache2 fping smokeping ssmtp syslog-ng ttf-dejavu unzip iw time dnsutils \
 &&  rm /etc/ssmtp/ssmtp.conf \
 &&  apt-get autoremove -y \
 &&  apt-get clean \
@@ -108,6 +108,10 @@ RUN \
 # Download and copy Youtube-DL - https://github.com/mad-ady/smokeping-youtube-dl
 RUN \
     curl -L -o /usr/share/perl5/Smokeping/probes/YoutubeDL.pm https://github.com/mad-ady/smokeping-youtube-dl/raw/master/YoutubeDL.pm
+
+# Download and copy WifiParams - https://github.com/mad-ady/smokeping-wifi-param
+RUN \
+    curl -L -o /usr/share/perl5/Smokeping/probes/WifiParam.pm https://github.com/mad-ady/smokeping-wifi-param/raw/master/WifiParam.pm
 
 # Download and copy speedtest-cli - https://github.com/sivel/speedtest-cli
 RUN \
