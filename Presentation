@@ -35,7 +35,7 @@ format = Median RTT %f seconds
 + overview
 width = 600
 height = 50
-range = 10h
+range = 24h
 max_rtt = 1000000000
 
 + detail
