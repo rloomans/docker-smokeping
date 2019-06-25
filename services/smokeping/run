@@ -1,3 +1,4 @@
 #!/bin/bash
-
+export LANG=C
+export LC_ALL=
 exec /usr/sbin/smokeping --config="/etc/smokeping/config" --nodaemon
