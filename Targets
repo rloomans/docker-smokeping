@@ -21,7 +21,7 @@ host = 172.16.0.1
 + Search
 menu = Search
 title = Search Latency
-probe = Curl
+probe = CurlHeadersOnly
 
 ++ Bing
 menu = Bing
@@ -42,7 +42,7 @@ host = www.yahoo.com
 + Social
 menu = Social
 title = Social Latency
-probe = Curl
+probe = CurlHeadersOnly
 
 ++ FacebookHTTP
 menu = FacebookHTTP
@@ -68,7 +68,7 @@ host = youtube.com
 + Gaming
 menu = Gaming
 title = Gaming Latency
-probe = Curl
+probe = CurlHeadersOnly
 
 ++ Steam
 menu = Steam
@@ -84,7 +84,7 @@ host = steamcommunity.com
 + Europe
 menu = Europe
 title = European Connectivity
-probe = Curl
+probe = CurlHeadersOnly
 
 ++ CernIXP
 menu = CernIXP
@@ -99,7 +99,7 @@ host = bbc.co.uk
 + USA
 menu = North America
 title = North American Connectivity
-probe = Curl
+probe = CurlHeadersOnly
 
 ++ MIT
 menu = MIT
