@@ -1,6 +1,6 @@
 *** Alerts ***
-to = 
-from = 
+to = monitoring@example.com
+from = smokeping@example.com
 
 +someloss
 type = loss

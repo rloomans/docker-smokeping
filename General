@@ -1,7 +1,8 @@
 *** General ***
+#THESE VALUES NEED TO BE CUSTOMIEZED FOR YOUR INSTALLATION. 
 
-owner    = 
-contact  = 
+owner    = administrator
+contact  = administrator@example.com
 mailhost = my.mail.host
 # NOTE: do not put the Image Cache below cgi-bin
 # since all files under cgi-bin will be executed ... this is not
