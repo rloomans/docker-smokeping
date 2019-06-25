@@ -63,12 +63,10 @@ RUN \
     apt-get update \
 &&  apt-get install -y apache2 fping smokeping ssmtp syslog-ng ttf-dejavu unzip \
 &&  rm /etc/ssmtp/ssmtp.conf \
-&&  ln -s /etc/smokeping/apache2.conf /etc/apache2/conf-available/apache2.conf \
-&&  a2enconf apache2 \
-&&  a2enmod cgid \
 &&  apt-get autoremove -y \
 &&  apt-get clean \
 &&  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 
 #Adding Custom files
 ADD init/ /etc/my_init.d/
@@ -93,8 +91,8 @@ RUN \
 &&  cd /tmp \
 &&  unzip -o smokeping.zip \
 &&  cp /tmp/SmokePing-master/bin/smokeping_cgi /usr/share/smokeping/smokeping.cgi \
-&&  cp -Rv /tmp/SmokePing-master/htdocs/cropper/ /usr/share/smokeping/www/cropper \
-&&  cp /tmp/SmokePing-master/htdocs/cropper/cropper.js /usr/share/smokeping/www/cropper/cropper.min.js \
+&&  cp -Rv /tmp/SmokePing-master/htdocs/ /usr/share/smokeping/www/ \
+#&&  cp /tmp/SmokePing-master/htdocs/cropper/cropper.js /usr/share/smokeping/www/cropper/cropper.min.js \
 &&  cp /tmp/SmokePing-master/bin/smokeping /usr/sbin \
 &&  cp /tmp/SmokePing-master/bin/smokeinfo /usr/sbin \
 &&  cp /tmp/SmokePing-master/lib/*.pm /usr/share/perl5/ \
@@ -120,6 +118,14 @@ RUN \
 RUN \
     curl -L -o /usr/local/bin/youtube-dl https://yt-dl.org/downloads/latest/youtube-dl \
 &&  chmod a+x /usr/local/bin/youtube-dl
+
+
+# =======================================================================================
+# Configure apache
+RUN \
+#    ln -s /etc/smokeping/apache2.conf /etc/apache2/conf-available/apache2.conf \
+#&&  a2enconf apache2 \
+    a2enmod cgid
 
 # ========================================================================================
 # Adjust syslog-ng / cleanup
