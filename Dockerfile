@@ -61,7 +61,7 @@ ENV DEBIAN_FRONTEND="noninteractive" HOME="/root" TERM="xterm" APACHE_LOG_DIR="/
 # Applying stuff
 RUN \
     apt-get update \
-&&  apt-get install -y apache2 fping smokeping ssmtp syslog-ng ttf-dejavu unzip iw time dnsutils iproute2 busybox \
+&&  apt-get install -y apache2 fping smokeping ssmtp syslog-ng ttf-dejavu unzip iw time dnsutils iproute2 busybox tzdata \
 &&  rm /etc/ssmtp/ssmtp.conf \
 &&  apt-get autoremove -y \
 &&  apt-get clean \
