@@ -1,4 +1,17 @@
 #!/bin/bash
 export LANG=C
 export LC_ALL=
-exec /usr/sbin/smokeping --config="/etc/smokeping/config" --nodaemon
+if [ -f /etc/smokeping/smokeping_secrets ]; then
+	chmod 440 /etc/smokeping/smokeping_secrets
+	chown smokeping:www-data /etc/smokeping/smokeping_secrets
+fi
+if [ -n "$SMOKEPING_MASTER_URL" -a -n "$SMOKEPING_SHARED_SECRET" ]; then
+	logger -s -t $0 "Running smokeping as slave, connecting to $SMOKEPING_MASTER_URL"
+	echo "$SMOKEPING_SHARED_SECRET" > /etc/smokeping/secret
+	chmod 440 /etc/smokeping/secret
+	chown smokeping:www-data /etc/smokeping/secret
+	exec /usr/sbin/smokeping --config="/etc/smokeping/config" --master-url "$SMOKEPING_MASTER_URL" --shared-secret /etc/smokeping/secret --cache-dir /var/lib/smokeping --nodaemon $SMOKEPING_EXTRA_FLAGS
+else
+	logger -s -t $0 "Running smokeping as master"
+	exec /usr/sbin/smokeping --config="/etc/smokeping/config" --nodaemon $SMOKEPING_EXTRA_FLAGS
+fi
