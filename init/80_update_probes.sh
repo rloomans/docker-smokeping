@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SMOKELIB=/opt/smokeping/lib/Smokeping
+
 logger -s -t $0 "Updating probes..."
 curl -L -o /tmp/speedtest.pm https://github.com/mad-ady/smokeping-speedtest/raw/master/speedtest.pm
 curl -L -o /tmp/YoutubeDL.pm https://github.com/mad-ady/smokeping-youtube-dl/raw/master/YoutubeDL.pm
@@ -8,7 +10,7 @@ curl -L -o /tmp/WifiParam.pm https://github.com/mad-ady/smokeping-wifi-param/raw
 for file in speedtest.pm YoutubeDL.pm WifiParam.pm;
 do
     if [ -s "/tmp/$file" ]; then
-        mv "/tmp/$file" "/usr/share/perl5/Smokeping/probes/$file"
+        mv "/tmp/$file" "$SMOKELIB/probes/$file"
     fi
 done
 

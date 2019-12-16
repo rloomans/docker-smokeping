@@ -31,3 +31,7 @@ fi
 if [ ! -f /config/pathnames ]; then
   cp /tmp/pathnames /config/pathnames
 fi
+
+if [ ! -f /config/config ]; then
+  cp /tmp/config /config/config
+fi

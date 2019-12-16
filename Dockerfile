@@ -1,72 +1,57 @@
-FROM phusion/baseimage:master
+FROM phusion/baseimage:master as build
 MAINTAINER mad_ady, https://github.com/mad-ady/docker-smokeping
 
 # ========================================================================================
-# ====== PhantomJS
-# Dependencies we just need for building phantomjs
-#ENV buildDependencies \
-#    bison \
-#    build-essential \
-#    flex \
-#    g++ \
-#    git \
-#    gperf \
-#    libpng-dev \
-#    libsqlite3-dev \
-#    libssl-dev \
-#    perl \
-#    ruby \
-#    unzip \
-#    wget 
-#
-## Dependencies we need for running phantomjs
-#ENV phantomJSDependencies \
-#    libfontconfig1-dev \
-#    libfreetype6 \
-#    libicu-dev \
-#    libjpeg-dev \
-#    openssl \
-#    python
-#  
-#ENV phantomVersion 2.1.1
-#
-## Compiling and installing PhantomJS
-#RUN \
-#    # Installing dependencies
-#    apt-get update -yqq \
-#&&  apt-get install -fyqq ${buildDependencies} ${phantomJSDependencies}\
-#    # Downloading src, unzipping & removing zip
-#&&  mkdir phantomjs \
-#&&  cd phantomjs \
-#&&  git clone https://github.com/ariya/phantomjs.git . \
-#&&  git checkout ${phantomVersion} \
-#&&  ./build.py --confirm --release --git-clean-qtbase --git-clean-qtwebkit \
-#&&  cp bin/phantomjs /usr/bin/phantomjs \
-#    # Removing build dependencies, clean temporary files
-#&&  apt-get purge -yqq ${buildDependencies} \
-#&&  apt-get autoremove -yqq \
-#&&  apt-get clean \
-#&&  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /phantomjs \
-#    # Checking if phantom works
-#&&  phantomjs -v
-
-# ========================================================================================
-
-
-# ========================================================================================
 # ====== SmokePing
-# Apache environment settings
-ENV DEBIAN_FRONTEND="noninteractive" HOME="/root" TERM="xterm" APACHE_LOG_DIR="/var/log/apache2" APACHE_LOCK_DIR="/var/lock/apache2" APACHE_PID_FILE="/var/run/apache2.pid"
+ENV \
+    DEBIAN_FRONTEND="noninteractive" \
+    HOME="/root" \
+    TERM="xterm" \
+    PERL_MM_USE_DEFAULT=1 \
+    LC_ALL=C \
+    LANG=C
 
-# Applying stuff
+# Install base packages and do the build
 RUN \
     apt-get update \
-&&  apt-get install -y apache2 fping smokeping ssmtp syslog-ng ttf-dejavu unzip iw time dnsutils iproute2 busybox tzdata \
-&&  rm /etc/ssmtp/ssmtp.conf \
-&&  apt-get autoremove -y \
-&&  apt-get clean \
-&&  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+&&  apt-get install -y build-essential autoconf git cpanminus unzip rrdtool librrds-perl libnet-ssleay-perl \
+&&  git clone https://github.com/mad-ady/SmokePing.git \
+&&  cd SmokePing \
+&&  ./bootstrap \
+&&  ./configure \
+&&  make install \
+&&  mv htdocs/smokeping.fcgi.dist htdocs/smokeping.fcgi
 
+###########################################################################################
+# Target image                                                                            #
+###########################################################################################
+
+#create the production image
+FROM phusion/baseimage:master
+MAINTAINER mad_ady, https://github.com/mad-ady/docker-smokeping
+
+# Some build ENV variables
+# LIBDIR looks like /usr/lib/x86_64-linux-gnu
+# PERLDIR looks like /usr/lib/x86_64-linux-gnu/perl5/5.26
+#ENV \
+#   LIBDIR=$(ldconfig -v 2>/dev/null | grep /usr/lib | head --lines=2 | tail -1 | sed 's/:$//') \
+#   PERLDIR=$(perl -V | grep $LIBDIR/perl5/ | tail -1 | sed 's/ *//') \ 
+ENV \
+    LIBDIR=/usr/lib/x86_64-linux-gnu \
+    PERLDIR=/usr/lib/x86_64-linux-gnu/perl5/5.26
+
+# Apache environment settings
+ENV \
+    DEBIAN_FRONTEND="noninteractive" \
+    HOME="/root" \
+    TERM="xterm" \
+    APACHE_LOG_DIR="/var/log/apache2" \
+    APACHE_LOCK_DIR="/var/lock/apache2" \
+    APACHE_PID_FILE="/var/run/apache2.pid" \
+    PERL_MM_USE_DEFAULT=1 \
+    PERL5LIB=/opt/smokeping/lib \
+    LC_ALL=C \
+    LANG=C
 
 #Adding Custom files
 ADD init/ /etc/my_init.d/
@@ -80,67 +65,73 @@ ADD Slaves /tmp/Slaves
 ADD Targets /tmp/Targets
 ADD pathnames /tmp/pathnames
 ADD ssmtp.conf /tmp/ssmtp.conf
-ADD config /etc/smokeping/config
-RUN chmod -v +x /etc/service/*/run
-RUN chmod -v +x /etc/my_init.d/*.sh
-RUN mkdir /var/run/smokeping
+ADD config /tmp/config
 
-# Update Smokeping
+# Copy Smokeping that we previously built
+COPY --from=build /opt/smokeping-* /opt/smokeping
+
+# Copy Smokeping Perl modules that were bulilt previously
+COPY --from=build ${PERLDIR}/ ${PERLDIR}/
+
+# Copy smokemail, tmail, web interface
+COPY --from=build /SmokePing/etc/smokemail.dist /etc/smokeping/smokemail
+COPY --from=build /SmokePing/etc/tmail.dist /etc/smokeping/tmail
+COPY --from=build /SmokePing/etc/basepage.html.dist /etc/smokeping/basepage.html
+COPY --from=build /SmokePing/etc/config.dist /etc/smokeping/config
+COPY --from=build /SmokePing/VERSION /opt/smokeping
+
+# Install dependencies
 RUN \
-    curl -L -o /tmp/smokeping.zip https://github.com/mad-ady/SmokePing/archive/master.zip \
-&&  cd /tmp \
-&&  unzip -o smokeping.zip \
-&&  cp /tmp/SmokePing-master/bin/smokeping_cgi /usr/share/smokeping/smokeping.cgi \
-&&  cp -Rv /tmp/SmokePing-master/htdocs/ /usr/share/smokeping/www/ \
-#&&  cp /tmp/SmokePing-master/htdocs/cropper/cropper.js /usr/share/smokeping/www/cropper/cropper.min.js \
-&&  cp /tmp/SmokePing-master/bin/smokeping /usr/sbin \
-&&  cp /tmp/SmokePing-master/bin/smokeinfo /usr/sbin \
-&&  cp /tmp/SmokePing-master/lib/*.pm /usr/share/perl5/ \
-&&  cp -Rv /tmp/SmokePing-master/lib/Smokeping/* /usr/share/perl5/Smokeping \
-&&  chown -R www-data: /var/cache/smokeping/ \
-&&  ln -s /var/cache/smokeping/ /usr/share/smokeping/www/cache
-
-# Add custom probes
-# Download and copy Speedtest - https://github.com/mad-ady/smokeping-speedtest
-RUN \
-    curl -L -o /usr/share/perl5/Smokeping/probes/speedtest.pm https://github.com/mad-ady/smokeping-speedtest/raw/master/speedtest.pm
-
-# Download and copy Youtube-DL - https://github.com/mad-ady/smokeping-youtube-dl
-RUN \
-    curl -L -o /usr/share/perl5/Smokeping/probes/YoutubeDL.pm https://github.com/mad-ady/smokeping-youtube-dl/raw/master/YoutubeDL.pm
-
-# Download and copy WifiParams - https://github.com/mad-ady/smokeping-wifi-param
-RUN \
-    curl -L -o /usr/share/perl5/Smokeping/probes/WifiParam.pm https://github.com/mad-ady/smokeping-wifi-param/raw/master/WifiParam.pm
-
-# Download and copy speedtest-cli - https://github.com/sivel/speedtest-cli
-RUN \
-    curl -L -o /usr/local/bin/speedtest-cli https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py \
-&&  chmod a+x /usr/local/bin/speedtest-cli
-
-# Download and copy youtube-dl - https://github.com/ytdl-org/youtube-dl/blob/master/README.md
-RUN \
-    curl -L -o /usr/local/bin/youtube-dl https://yt-dl.org/downloads/latest/youtube-dl \
-&&  chmod a+x /usr/local/bin/youtube-dl
-
-
-# =======================================================================================
-# Configure apache
-RUN \
-#    ln -s /etc/smokeping/apache2.conf /etc/apache2/conf-available/apache2.conf \
-#&&  a2enconf apache2 \
-    a2enmod cgid
-
-# ========================================================================================
-# Adjust syslog-ng / cleanup
-RUN \
-    # Update repository and install syslog-ng
     apt-get update \
-&&  apt-get install -y syslog-ng \
-    # Adjusting SyslogNG - see https://github.com/phusion/baseimage-docker/pull/223/commits/dda46884ed2b1b0f7667b9cc61a961e24e910784
+&&  apt-get install -y apache2 rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata \
+&&  chmod -v +x /etc/service/*/run \
+&&  chmod -v +x /etc/my_init.d/*.sh \
+&&  mkdir /var/run/smokeping \
+&&  mkdir /var/cache/smokeping \
+&&  mkdir /opt/smokeping/cache \
+&&  mkdir /opt/smokeping/var \
+&&  mkdir /opt/smokeping/data \
+#&&  ln -s /etc/smokeping /opt/smokeping/etc \
+&&  mv /opt/smokeping/etc /opt/smokeping/etc.dist \
+&&  ln -s /opt/smokeping/etc /config \
+&&  ln -s /opt/smokeping /opt/smokeping-$(cat /opt/smokeping/VERSION) \
+# Create cache dir
+&&  mkdir /var/lib/smokeping \
+# Create the smokeping user
+&&  useradd -d /opt/smokeping -G www-data smokeping \
+# Enable cgid support in apache 
+&&  a2enmod cgid \
+&&  sed -i 's/#AddHandler cgi-script .cgi/AddHandler cgi-script .cgi .pl .fcgi/' /etc/apache2/mods-available/mime.conf \
+# Adjusting SyslogNG - see https://github.com/phusion/baseimage-docker/pull/223/commits/dda46884ed2b1b0f7667b9cc61a961e24e910784
 &&  sed -ie "s/^       system();$/#      system(); #This is to avoid calls to \/proc\/kmsg inside docker/g" /etc/syslog-ng/syslog-ng.conf \
+&&  rm /etc/ssmtp/ssmtp.conf \
 &&  apt-get autoremove -y \
-&&  apt-get clean 
+&&  apt-get clean \
+&&  rm -rf /var/lib/apt/lists/* /var/tmp/*
+
+ADD smokeping.conf /etc/apache2/sites-enabled/10-smokeping.conf
+RUN  mkdir /var/www/html/smokeping \
+&&  ln -s /opt/smokeping/cache /var/www/html/smokeping/cache \
+&&  chmod g+w /opt/smokeping/cache \
+&&  ln -s /opt/smokeping/data /data \
+&&  chown smokeping:www-data /opt/smokeping/cache \
+&&  chown -R smokeping:www-data /opt/smokeping/data
+COPY --from=build /SmokePing/htdocs/ /var/www/html/smokeping/
+
+# Add custom probes and dependencies
+
+RUN \
+    curl -L -o /opt/smokeping/lib/Smokeping/probes/speedtest.pm \
+        https://github.com/mad-ady/smokeping-speedtest/raw/master/speedtest.pm \
+&&  curl -L -o /opt/smokeping/lib/Smokeping/probes/YoutubeDL.pm \
+        https://github.com/mad-ady/smokeping-youtube-dl/raw/master/YoutubeDL.pm \
+&&  curl -L -o /opt/smokeping/lib/Smokeping/probes/WifiParam.pm \
+        https://github.com/mad-ady/smokeping-wifi-param/raw/master/WifiParam.pm \
+&&  curl -L -o /usr/local/bin/speedtest-cli \
+        https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py \
+&&  chmod a+x /usr/local/bin/speedtest-cli \
+&&  curl -L -o /usr/local/bin/youtube-dl https://yt-dl.org/downloads/latest/youtube-dl \
+&&  chmod a+x /usr/local/bin/youtube-dl
 
 
 # Use baseimage-docker's init system

@@ -1,6 +1,7 @@
 #!/bin/bash
 export LANG=C
 export LC_ALL=
+
 if [ -f /etc/smokeping/smokeping_secrets ]; then
 	chmod 440 /etc/smokeping/smokeping_secrets
 	chown smokeping:www-data /etc/smokeping/smokeping_secrets
@@ -10,8 +11,9 @@ if [ -n "$SMOKEPING_MASTER_URL" -a -n "$SMOKEPING_SHARED_SECRET" ]; then
 	echo "$SMOKEPING_SHARED_SECRET" > /etc/smokeping/secret
 	chmod 440 /etc/smokeping/secret
 	chown smokeping:www-data /etc/smokeping/secret
-	exec /usr/sbin/smokeping --config="/etc/smokeping/config" --master-url "$SMOKEPING_MASTER_URL" --shared-secret /etc/smokeping/secret --cache-dir /var/lib/smokeping --nodaemon $SMOKEPING_EXTRA_FLAGS
+	exec /opt/smokeping/bin/smokeping --config="/config/config" --master-url "$SMOKEPING_MASTER_URL" \
+		--shared-secret /etc/smokeping/secret --cache-dir /var/lib/smokeping --nodaemon $SMOKEPING_EXTRA_FLAGS
 else
 	logger -s -t $0 "Running smokeping as master"
-	exec /usr/sbin/smokeping --config="/etc/smokeping/config" --nodaemon $SMOKEPING_EXTRA_FLAGS
+	exec /opt/smokeping/bin/smokeping --config="/config/config" --nodaemon $SMOKEPING_EXTRA_FLAGS
 fi
