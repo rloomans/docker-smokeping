@@ -1,0 +1,28 @@
+version: "3.7"
+services:
+  # container name
+  slave:
+          container_name: ${PROBENAME}-${SERVICE}
+          # which image to pull
+          image: madady/smokeping-influx:20191217
+          # set a hostname so that master-slave communication works correctly
+          hostname: ${PROBENAME}-${SERVICE}
+          # pass data to the container as environment variables
+          environment:
+            # file owner id
+            - PUID=0
+            # group owner id
+            - PGID=0
+            # timezone
+            - TZ=Europe/Bucharest
+            # extra smokeping flags passed to the smokeping daemon
+            - SMOKEPING_EXTRA_FLAGS=--debug-daemon
+            # master URL
+            - SMOKEPING_MASTER_URL=http://${SMOKEUSER}:${SMOKEPASS}@${MASTER}
+            # shared secret (from smokeping_secrets)
+            - SMOKEPING_SHARED_SECRET=${SMOKEPASS}
+          deploy: 
+                  restart_policy:
+                       condition: on-failure
+          network_mode: bridge
+
