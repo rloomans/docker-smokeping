@@ -2,9 +2,9 @@
 export LANG=C
 export LC_ALL=
 
-if [ -f /etc/smokeping/smokeping_secrets ]; then
-	chmod 440 /etc/smokeping/smokeping_secrets
-	chown smokeping:www-data /etc/smokeping/smokeping_secrets
+if [ -f /opt/smokeping/etc/smokeping_secrets ]; then
+	chmod 440 /opt/smokeping/etc/smokeping_secrets
+	chown smokeping:www-data /opt/smokeping/etc/smokeping_secrets
 fi
 if [ -n "$SMOKEPING_MASTER_URL" -a -n "$SMOKEPING_SHARED_SECRET" ]; then
 	logger -s -t $0 "Running smokeping as slave, connecting to $SMOKEPING_MASTER_URL"
