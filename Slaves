@@ -1,5 +1,5 @@
 *** Slaves ***
-secrets=/etc/smokeping/smokeping_secrets
+secrets=/opt/smokeping/etc/smokeping_secrets
 #+boomer
 #display_name=boomer
 #color=0000ff
