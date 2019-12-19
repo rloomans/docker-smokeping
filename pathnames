@@ -1,5 +1,5 @@
 sendmail = /bin/false
-imgcache = /var/cache/smokeping
+imgcache = /opt/smokeping/cache
 imgurl   = cache
 datadir  = /data
 piddir  = /var/run/smokeping
