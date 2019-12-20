@@ -4,7 +4,7 @@ services:
   slave:
           container_name: ${PROBENAME}-${SERVICE}
           # which image to pull
-          image: madady/smokeping-influx:20191217
+          image: madady/smokeping-influx:latest
           # set a hostname so that master-slave communication works correctly
           hostname: ${PROBENAME}-${SERVICE}
           # pass data to the container as environment variables

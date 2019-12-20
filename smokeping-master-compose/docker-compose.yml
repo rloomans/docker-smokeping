@@ -4,7 +4,7 @@ services:
   smokeping-master:
           container_name: smokeping-master
           # which image to pull
-          image: madady/smokeping-influx:20191217
+          image: madady/smokeping-influx:latest
           # set a hostname so that master-slave communication works correctly
           hostname: smokeping-master
           # pass data to the container as environment variables

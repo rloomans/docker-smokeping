@@ -112,9 +112,9 @@ RUN \
 ADD smokeping.conf /etc/apache2/sites-enabled/10-smokeping.conf
 RUN  mkdir /var/www/html/smokeping \
 &&  ln -s /opt/smokeping/cache /var/www/html/smokeping/cache \
+&&  chown smokeping:www-data /opt/smokeping/cache \
 &&  chmod g+w /opt/smokeping/cache \
 &&  ln -s /opt/smokeping/data /data \
-&&  chown smokeping:www-data /opt/smokeping/cache \
 &&  chown -R smokeping:www-data /opt/smokeping/data
 COPY --from=build /SmokePing/htdocs/ /var/www/html/smokeping/
 
