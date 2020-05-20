@@ -18,11 +18,10 @@ services:
             # extra smokeping flags passed to the smokeping daemon
             - SMOKEPING_EXTRA_FLAGS=--debug-daemon
             # master URL
+            # the variables are expanded from the .env file in the same directory
             - SMOKEPING_MASTER_URL=http://${SMOKEUSER}:${SMOKEPASS}@${MASTER}
             # shared secret (from smokeping_secrets)
             - SMOKEPING_SHARED_SECRET=${SMOKEPASS}
-          deploy: 
-                  restart_policy:
-                       condition: on-failure
+          restart: always
           network_mode: bridge
 

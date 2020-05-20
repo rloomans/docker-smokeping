@@ -37,8 +37,6 @@ services:
                   # on which host port should I expose the apache webserver
                   # (master only)
                   - "33196:80"
-          deploy: 
-                  restart_policy:
-                       condition: on-failure
+          restart: always
           network_mode: bridge
 
