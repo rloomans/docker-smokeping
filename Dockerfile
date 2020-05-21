@@ -80,10 +80,16 @@ COPY --from=build /SmokePing/etc/basepage.html.dist /etc/smokeping/basepage.html
 COPY --from=build /SmokePing/etc/config.dist /etc/smokeping/config
 COPY --from=build /SmokePing/VERSION /opt/smokeping
 
+# Add Ookla Smokeping repository - https://www.speedtest.net/apps/cli
+
 # Install dependencies
 RUN \
-    apt-get update \
-&&  apt-get install -y apache2 rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata \
+    export OOKLA_REPO_KEY=379CE192D401AB61 \
+&&  export DEB_DISTRO=$(lsb_release -sc) \
+&&  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $OOKLA_REPO_KEY \
+&&  echo "deb https://ookla.bintray.com/debian ${DEB_DISTRO} main" | tee  /etc/apt/sources.list.d/speedtest.list \
+&&  apt-get update \
+&&  apt-get install -y apache2 rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest \
 &&  chmod -v +x /etc/service/*/run \
 &&  chmod -v +x /etc/my_init.d/*.sh \
 &&  mkdir /var/run/smokeping \
@@ -123,6 +129,8 @@ COPY --from=build /SmokePing/htdocs/ /var/www/html/smokeping/
 RUN \
     curl -L -o /opt/smokeping/lib/Smokeping/probes/speedtest.pm \
         https://github.com/mad-ady/smokeping-speedtest/raw/master/speedtest.pm \
+&&  curl -L -o /opt/smokeping/lib/Smokeping/probes/speedtestcli.pm \
+        https://github.com/mad-ady/smokeping-speedtest/raw/master/speedtestcli.pm \
 &&  curl -L -o /opt/smokeping/lib/Smokeping/probes/YoutubeDL.pm \
         https://github.com/mad-ady/smokeping-youtube-dl/raw/master/YoutubeDL.pm \
 &&  curl -L -o /opt/smokeping/lib/Smokeping/probes/WifiParam.pm \
