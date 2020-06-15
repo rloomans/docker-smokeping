@@ -1,12 +1,13 @@
 # mad-ady/smokeping - based on magicdud4eva/smokeping
 
-Smokeping keeps track of your network latency. For a full example of what this application is capable of visit [UCDavis](http://smokeping.ucdavis.edu/cgi-bin/smokeping.fcgi). The Smokeping Docker image includes the latest version of Smokeping, speedtest-cli, youtube-dl. It's suitable to run as master/slave. Default configuration needs tweaking, but should allow you to run out of the box.
+Smokeping keeps track of your network latency. For a full example of what this application is capable of visit [UCDavis](http://smokeping.ucdavis.edu/cgi-bin/smokeping.fcgi). The Smokeping Docker image includes the latest version of Smokeping, speedtest-cli, Ookla's speedtestcli client, youtube-dl. It's suitable to run as master/slave. Default configuration needs tweaking, but should allow you to run out of the box.
 
 ![Smokeping Docker](https://github.com/magicdude4eva/docker-smokeping/raw/master/docker-smokeping.png)
 
 ## TL;DR - Features
 * Private Smokeping branch (https://github.com/mad-ady/SmokePing)
 * Speedtest probe (https://github.com/mad-ady/smokeping-speedtest / https://github.com/sivel/speedtest-cli)
+* Speedtestcli probe (for Ookla's speedtest client)
 * Youtube-dl probe (https://github.com/mad-ady/smokeping-youtube-dl)
 * Working configuration for DNS, Speedtest and web-site probes
 * Ability to run as a slave
@@ -15,6 +16,9 @@ Smokeping keeps track of your network latency. For a full example of what this a
 [smokeurl]: http://oss.oetiker.ch/smokeping/
 
 ## Usage
+
+Note - you can edit/use `smokeping-master-compose` or `smokeping-slave-compose` with docker-compose after editing them.
+
 Run standalone:
 
 ```
@@ -28,7 +32,7 @@ docker run \
     -v <path/to/smokeping/smokeping_secrets>:/etc/smokeping/smokeping_secrets \
     -v <path/to/smokeping/data>:/data \
     -v <path/to/smokeping/config>:/config \
-    madady/docker-smokeping:1.0
+    madady/smokeping-influx:latest
 ```
 
 Run as a slave (connected to docker0):
@@ -41,7 +45,7 @@ docker run \
     -e SMOKEPING_EXTRA_FLAGS="--debug-daemon" \
     -e SMOKEPING_MASTER_URL=<http://master.server.url:9500/smokeping/smokeping.cgi> \
     -e SMOKEPING_SHARED_SECRET=<your_secret_goes_here_in_clear_text_unfortunately> \
-    madady/docker-smokeping:1.0
+    madady/smokeping-influx:latest
 ```
 In order to run as a slave you'll need to edit the master configuration, speciffically:
 * Add the following to /config/Slaves:
@@ -102,7 +106,7 @@ In this instance `PUID=1001` and `PGID=1001`. To find yours use `id user` as bel
 
 ## Setting up the application 
 
-Once running the URL will be `http://<host-ip>:9500/smokeping/smokeping.cgi`.
+Once running the URL will be `http://<host-ip>:9500/smokeping/smokeping.fcgi`.
 
 Basics are, edit the Targets file to ping the hosts you're interested in to match the format found there. 
 Wait 10 minutes.
