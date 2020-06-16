@@ -14,7 +14,7 @@ ENV \
 # Install base packages and do the build
 RUN \
     apt-get update \
-&&  apt-get install -y build-essential autoconf git cpanminus unzip rrdtool librrds-perl libnet-ssleay-perl libapache2-mod-fcgid \
+&&  apt-get install -y build-essential autoconf git cpanminus unzip rrdtool librrds-perl libnet-ssleay-perl \
 &&  git clone https://github.com/mad-ady/SmokePing.git \
 &&  cd SmokePing \
 &&  ./bootstrap \
@@ -89,7 +89,7 @@ RUN \
 &&  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $OOKLA_REPO_KEY \
 &&  echo "deb https://ookla.bintray.com/debian ${DEB_DISTRO} main" | tee  /etc/apt/sources.list.d/speedtest.list \
 &&  apt-get update \
-&&  apt-get install -y apache2 rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest \
+&&  apt-get install -y apache2 libapache2-mod-fcgid rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest \
 &&  chmod -v +x /etc/service/*/run \
 &&  chmod -v +x /etc/my_init.d/*.sh \
 &&  mkdir /var/run/smokeping \
