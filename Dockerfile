@@ -1,5 +1,5 @@
 FROM phusion/baseimage:master as build
-MAINTAINER mad_ady, https://github.com/mad-ady/docker-smokeping
+MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
 
 # ========================================================================================
 # ====== SmokePing
@@ -28,14 +28,14 @@ RUN \
 
 #create the production image
 FROM phusion/baseimage:master
-MAINTAINER mad_ady, https://github.com/mad-ady/docker-smokeping
+MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
 
 # Some build ENV variables
 # LIBDIR looks like /usr/lib/x86_64-linux-gnu
 # PERLDIR looks like /usr/lib/x86_64-linux-gnu/perl5/5.26
 #ENV \
 #   LIBDIR=$(ldconfig -v 2>/dev/null | grep /usr/lib | head --lines=2 | tail -1 | sed 's/:$//') \
-#   PERLDIR=$(perl -V | grep $LIBDIR/perl5/ | tail -1 | sed 's/ *//') \ 
+#   PERLDIR=$(perl -V | grep $LIBDIR/perl5/ | tail -1 | sed 's/ *//') \
 ENV \
     LIBDIR=/usr/lib/x86_64-linux-gnu \
     PERLDIR=/usr/lib/x86_64-linux-gnu/perl5/5.26
@@ -105,7 +105,7 @@ RUN \
 &&  mkdir /var/lib/smokeping \
 # Create the smokeping user
 &&  useradd -d /opt/smokeping -G www-data smokeping \
-# Enable cgid support in apache 
+# Enable cgid support in apache
 &&  a2enmod cgid \
 &&  sed -i 's/#AddHandler cgi-script .cgi/AddHandler cgi-script .cgi .pl .fcgi/' /etc/apache2/mods-available/mime.conf \
 # Adjusting SyslogNG - see https://github.com/phusion/baseimage-docker/pull/223/commits/dda46884ed2b1b0f7667b9cc61a961e24e910784
