@@ -15,7 +15,7 @@ ENV \
 RUN \
     apt-get update \
 &&  apt-get install -y build-essential autoconf git cpanminus unzip rrdtool librrds-perl libnet-ssleay-perl \
-&&  git clone https://github.com/mad-ady/SmokePing.git \
+&&  git clone https://github.com/rloomans/SmokePing.git \
 &&  cd SmokePing \
 &&  ./bootstrap \
 &&  ./configure \
