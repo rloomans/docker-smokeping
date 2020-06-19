@@ -1,4 +1,21 @@
-FROM phusion/baseimage:master as build
+FROM phusion/baseimage:master as base
+MAINTAINER rloomans, https://github.com/rloomans/docker-phusion-baseimage
+
+ENV \
+    DEBIAN_FRONTEND="noninteractive" \
+    HOME="/root" \
+    TERM="xterm" \
+    LC_ALL=C \
+    LANG=C
+
+# Install base packages and do the build
+RUN \
+    apt-get update && \
+    apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+FROM base as build
 MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
 
 # ========================================================================================
@@ -15,7 +32,11 @@ ENV \
 RUN \
     apt-get update \
 &&  apt-get install -y build-essential autoconf git cpanminus unzip rrdtool librrds-perl libnet-ssleay-perl \
-&&  git clone https://github.com/rloomans/SmokePing.git \
+&&  apt-get clean \
+&&  rm -rf /var/lib/apt/lists/* /var/tmp/*
+
+RUN \
+    git clone https://github.com/rloomans/SmokePing.git \
 &&  cd SmokePing \
 &&  ./bootstrap \
 &&  ./configure \
@@ -26,8 +47,8 @@ RUN \
 # Target image                                                                            #
 ###########################################################################################
 
-#create the production image
-FROM phusion/baseimage:master
+# create the production image
+FROM base
 MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
 
 # Some build ENV variables
@@ -52,6 +73,23 @@ ENV \
     PERL5LIB=/opt/smokeping/lib \
     LC_ALL=C \
     LANG=C
+
+# Add Ookla Smokeping repository - https://www.speedtest.net/apps/cli
+
+# Install dependencies
+RUN \
+    export OOKLA_REPO_KEY=379CE192D401AB61 \
+&&  export DEB_DISTRO=$(lsb_release -sc) \
+&&  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $OOKLA_REPO_KEY \
+&&  echo "deb https://ookla.bintray.com/debian ${DEB_DISTRO} main" | tee  /etc/apt/sources.list.d/speedtest.list \
+&&  apt-get update \
+&&  apt-get install -y apache2 libapache2-mod-fcgid rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest \
+&&  apt-get autoremove -y \
+&&  apt-get clean \
+&&  rm -rf /var/lib/apt/lists/* /var/tmp/* \
+# Adjusting SyslogNG - see https://github.com/phusion/baseimage-docker/pull/223/commits/dda46884ed2b1b0f7667b9cc61a961e24e910784
+&&  sed -ie "s/^       system();$/#      system(); #This is to avoid calls to \/proc\/kmsg inside docker/g" /etc/syslog-ng/syslog-ng.conf \
+&&  rm /etc/ssmtp/ssmtp.conf
 
 #Adding Custom files
 ADD init/ /etc/my_init.d/
@@ -80,48 +118,33 @@ COPY --from=build /SmokePing/etc/basepage.html.dist /etc/smokeping/basepage.html
 COPY --from=build /SmokePing/etc/config.dist /etc/smokeping/config
 COPY --from=build /SmokePing/VERSION /opt/smokeping
 
-# Add Ookla Smokeping repository - https://www.speedtest.net/apps/cli
+ADD smokeping.conf /etc/apache2/sites-enabled/10-smokeping.conf
 
-# Install dependencies
 RUN \
-    export OOKLA_REPO_KEY=379CE192D401AB61 \
-&&  export DEB_DISTRO=$(lsb_release -sc) \
-&&  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $OOKLA_REPO_KEY \
-&&  echo "deb https://ookla.bintray.com/debian ${DEB_DISTRO} main" | tee  /etc/apt/sources.list.d/speedtest.list \
-&&  apt-get update \
-&&  apt-get install -y apache2 libapache2-mod-fcgid rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest \
-&&  chmod -v +x /etc/service/*/run \
-&&  chmod -v +x /etc/my_init.d/*.sh \
-&&  mkdir /var/run/smokeping \
+    mkdir /var/run/smokeping \
 &&  mkdir /var/cache/smokeping \
-&&  mkdir /opt/smokeping/cache \
+&&  mkdir  /opt/smokeping/cache \
 &&  mkdir /opt/smokeping/var \
 &&  mkdir /opt/smokeping/data \
-#&&  ln -s /etc/smokeping /opt/smokeping/etc \
-&&  mv /opt/smokeping/etc /opt/smokeping/etc.dist \
-&&  ln -s /opt/smokeping/etc /config \
-&&  ln -s /opt/smokeping /opt/smokeping-$(cat /opt/smokeping/VERSION) \
 # Create cache dir
 &&  mkdir /var/lib/smokeping \
+&&  mkdir /var/www/html/smokeping \
 # Create the smokeping user
 &&  useradd -d /opt/smokeping -G www-data smokeping \
-# Enable cgid support in apache
-&&  a2enmod cgid \
-&&  sed -i 's/#AddHandler cgi-script .cgi/AddHandler cgi-script .cgi .pl .fcgi/' /etc/apache2/mods-available/mime.conf \
-# Adjusting SyslogNG - see https://github.com/phusion/baseimage-docker/pull/223/commits/dda46884ed2b1b0f7667b9cc61a961e24e910784
-&&  sed -ie "s/^       system();$/#      system(); #This is to avoid calls to \/proc\/kmsg inside docker/g" /etc/syslog-ng/syslog-ng.conf \
-&&  rm /etc/ssmtp/ssmtp.conf \
-&&  apt-get autoremove -y \
-&&  apt-get clean \
-&&  rm -rf /var/lib/apt/lists/* /var/tmp/*
-
-ADD smokeping.conf /etc/apache2/sites-enabled/10-smokeping.conf
-RUN  mkdir /var/www/html/smokeping \
 &&  ln -s /opt/smokeping/cache /var/www/html/smokeping/cache \
 &&  chown smokeping:www-data /opt/smokeping/cache \
 &&  chmod g+w /opt/smokeping/cache \
 &&  ln -s /opt/smokeping/data /data \
 &&  chown -R smokeping:www-data /opt/smokeping/data
+
+RUN \
+    chmod -v +x /etc/service/*/run \
+&&  chmod -v +x /etc/my_init.d/*.sh \
+#&&  ln -s /etc/smokeping /opt/smokeping/etc \
+&&  mv /opt/smokeping/etc /opt/smokeping/etc.dist \
+&&  ln -s /opt/smokeping/etc /config \
+&&  ln -s /opt/smokeping /opt/smokeping-$(cat /opt/smokeping/VERSION)
+
 COPY --from=build /SmokePing/htdocs/ /var/www/html/smokeping/
 
 # Add custom probes and dependencies
@@ -138,9 +161,9 @@ RUN \
 &&  curl -L -o /usr/local/bin/speedtest-cli \
         https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py \
 &&  chmod a+x /usr/local/bin/speedtest-cli \
-&&  curl -L -o /usr/local/bin/youtube-dl https://yt-dl.org/downloads/latest/youtube-dl \
+&&  curl -L -o /usr/local/bin/youtube-dl \
+        https://yt-dl.org/downloads/latest/youtube-dl \
 &&  chmod a+x /usr/local/bin/youtube-dl
-
 
 # Use baseimage-docker's init system
 CMD ["/sbin/my_init"]
