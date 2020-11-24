@@ -59,7 +59,7 @@ MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
 #   PERLDIR=$(perl -V | grep $LIBDIR/perl5/ | tail -1 | sed 's/ *//') \
 ENV \
     LIBDIR=/usr/lib/x86_64-linux-gnu \
-    PERLDIR=/usr/lib/x86_64-linux-gnu/perl5/5.26
+    PERLDIR=/usr/lib/x86_64-linux-gnu/perl5/5.30
 
 # Apache environment settings
 ENV \
@@ -108,6 +108,7 @@ ADD config /tmp/config
 COPY --from=build /opt/smokeping-* /opt/smokeping
 
 # Copy Smokeping Perl modules that were bulilt previously
+RUN perl -V
 COPY --from=build ${PERLDIR}/ ${PERLDIR}/
 
 # Copy smokemail, tmail, web interface
