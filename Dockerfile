@@ -31,7 +31,7 @@ ENV \
 # Install base packages and do the build
 RUN \
     apt-get update \
-&&  apt-get install -y build-essential autoconf git cpanminus unzip rrdtool librrds-perl libnet-ssleay-perl \
+&&  apt-get install -y build-essential autoconf git cpanminus unzip rrdtool librrds-perl libnet-ssleay-perl libssl-dev \
 &&  apt-get clean \
 &&  rm -rf /var/lib/apt/lists/* /var/tmp/*
 
@@ -79,9 +79,8 @@ ENV \
 # Install dependencies
 RUN \
     export OOKLA_REPO_KEY=379CE192D401AB61 \
-&&  export DEB_DISTRO=$(lsb_release -sc) \
 &&  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $OOKLA_REPO_KEY \
-&&  echo "deb https://ookla.bintray.com/debian ${DEB_DISTRO} main" | tee  /etc/apt/sources.list.d/speedtest.list \
+&&  echo "deb https://ookla.bintray.com/debian generic main" | tee  /etc/apt/sources.list.d/speedtest.list \
 &&  apt-get update \
 &&  apt-get install -y apache2 libapache2-mod-fcgid rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest \
 &&  apt-get autoremove -y \
