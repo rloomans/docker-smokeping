@@ -82,7 +82,7 @@ RUN \
 &&  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $OOKLA_REPO_KEY \
 &&  echo "deb https://ookla.bintray.com/debian generic main" | tee  /etc/apt/sources.list.d/speedtest.list \
 &&  apt-get update \
-&&  apt-get install -y apache2 libapache2-mod-fcgid rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest \
+&&  apt-get install -y apache2 libapache2-mod-fcgid rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest python-is-python3 \
 &&  apt-get autoremove -y \
 &&  apt-get clean \
 &&  rm -rf /var/lib/apt/lists/* /var/tmp/* \
