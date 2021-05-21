@@ -40,7 +40,7 @@ RUN \
 &&  cd SmokePing \
 &&  ./bootstrap \
 &&  ./configure \
-&&  make install \
+&&  (make install || (cat /SmokePing/thirdparty/work/*/build.log; false)) \
 &&  mv htdocs/smokeping.fcgi.dist htdocs/smokeping.fcgi
 
 ###########################################################################################
@@ -136,6 +136,9 @@ RUN \
 &&  chmod g+w /opt/smokeping/cache \
 &&  ln -s /opt/smokeping/data /data \
 &&  chown -R smokeping:www-data /opt/smokeping/data
+
+ADD favicon.ico /var/www/html/
+ADD favicon.png /var/www/html/
 
 RUN \
     chmod -v +x /etc/service/*/run \
