@@ -74,13 +74,14 @@ ENV \
     LC_ALL=C \
     LANG=C
 
-# Add Ookla Smokeping repository - https://www.speedtest.net/apps/cli
+# Fetch Ookla speedtest-cli installer - https://www.speedtest.net/apps/cli
+RUN \
+    curl -o ookla-speedtest-cli-install.sh https://install.speedtest.net/app/cli/install.deb.sh \
+&&  chmod +x ookla-speedtest-cli-install.sh
 
 # Install dependencies
 RUN \
-    export OOKLA_REPO_KEY=379CE192D401AB61 \
-&&  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $OOKLA_REPO_KEY \
-&&  echo "deb https://ookla.bintray.com/debian generic main" | tee  /etc/apt/sources.list.d/speedtest.list \
+    ./ookla-speedtest-cli-install.sh \
 &&  apt-get update \
 &&  apt-get install -y apache2 libapache2-mod-fcgid rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest python-is-python3 echoping \
 &&  apt-get autoremove -y \
