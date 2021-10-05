@@ -31,7 +31,7 @@ ENV \
 # Install base packages and do the build
 RUN \
     apt-get update \
-&&  apt-get install -y build-essential autoconf git cpanminus unzip rrdtool librrds-perl libnet-ssleay-perl libssl-dev \
+&&  apt-get install -y build-essential autoconf git cpanminus unzip rrdtool librrds-perl libnet-ssleay-perl libssl-dev zlib1g-dev \
 &&  apt-get clean \
 &&  rm -rf /var/lib/apt/lists/* /var/tmp/*
 
