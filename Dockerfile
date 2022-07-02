@@ -76,13 +76,12 @@ ENV \
 
 # Fetch Ookla speedtest-cli installer - https://www.speedtest.net/apps/cli
 RUN \
-    curl -o ookla-speedtest-cli-install.sh https://install.speedtest.net/app/cli/install.deb.sh \
+    curl -o ookla-speedtest-cli-install.sh https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh \
 &&  chmod +x ookla-speedtest-cli-install.sh
 
 # Install dependencies
 RUN \
     ./ookla-speedtest-cli-install.sh \
-&&  apt-get update \
 &&  apt-get install -y apache2 libapache2-mod-fcgid rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest python-is-python3 echoping \
 &&  apt-get autoremove -y \
 &&  apt-get clean \
