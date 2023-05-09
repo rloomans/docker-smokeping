@@ -1,4 +1,4 @@
-FROM phusion/baseimage:master as base
+FROM phusion/baseimage:jammy-1.0.1 as base
 MAINTAINER rloomans, https://github.com/rloomans/docker-phusion-baseimage
 
 ENV \
@@ -59,7 +59,7 @@ MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
 #   PERLDIR=$(perl -V | grep $LIBDIR/perl5/ | tail -1 | sed 's/ *//') \
 ENV \
     LIBDIR=/usr/lib/x86_64-linux-gnu \
-    PERLDIR=/usr/lib/x86_64-linux-gnu/perl5/5.30
+    PERLDIR=/usr/lib/x86_64-linux-gnu/perl5/5.34
 
 # Apache environment settings
 ENV \
@@ -82,7 +82,7 @@ RUN \
 # Install dependencies
 RUN \
     ./ookla-speedtest-cli-install.sh \
-&&  apt-get install -y apache2 libapache2-mod-fcgid rrdtool fping ssmtp syslog-ng ttf-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest python-is-python3 echoping \
+&&  apt-get install -y apache2 libapache2-mod-fcgid rrdtool fping ssmtp syslog-ng fonts-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest python-is-python3 \
 &&  apt-get autoremove -y \
 &&  apt-get clean \
 &&  rm -rf /var/lib/apt/lists/* /var/tmp/* \
