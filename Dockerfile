@@ -1,6 +1,8 @@
 FROM phusion/baseimage:jammy-1.0.1 as base
 MAINTAINER rloomans, https://github.com/rloomans/docker-phusion-baseimage
 
+ARG APT_HTTP_PROXY
+
 ENV \
     DEBIAN_FRONTEND="noninteractive" \
     HOME="/root" \
@@ -8,12 +10,49 @@ ENV \
     LC_ALL=C \
     LANG=C
 
-# Install base packages and do the build
+# Upgrade pre-installed packages
 RUN \
-    apt-get update && \
-    apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    if [ -n "$APT_HTTP_PROXY" ]; then \
+        printf 'Acquire::http::Proxy "%s";\n' "${APT_HTTP_PROXY}" > /etc/apt/apt.conf.d/apt-proxy.conf; \
+    fi \
+&&  apt-get update \
+&&  apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" \
+&&  apt-get clean \
+&&  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /etc/apt/apt.conf.d/apt-proxy.conf
+
+# Install common packages
+RUN \
+    if [ -n "$APT_HTTP_PROXY" ]; then \
+        printf 'Acquire::http::Proxy "%s";\n' "${APT_HTTP_PROXY}" > /etc/apt/apt.conf.d/apt-proxy.conf; \
+    fi \
+&&  apt-get update \
+&&  apt-get install -y \
+    curl \
+    dnsutils \
+    fping \
+    libauthen-radius-perl \
+    libcgi-fast-perl \
+    libconfig-grammar-perl \
+    libdigest-hmac-perl \
+    libio-socket-ssl-perl \
+    libjs-cropper \
+    libjs-prototype \
+    libjs-scriptaculous \
+    libnet-dns-perl \
+    libnet-ldap-perl \
+    libnet-ssleay-perl \
+    libnet-telnet-perl \
+    librrds-perl \
+    libsnmp-session-perl \
+    libsocket6-perl \
+    libssl-dev \
+    liburi-perl \
+    libwww-perl \
+    openssh-client \
+    rrdtool \
+    zlib1g-dev \
+&&  apt-get clean \
+&&  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /etc/apt/apt.conf.d/apt-proxy.conf
 
 FROM base as build
 MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
@@ -28,12 +67,20 @@ ENV \
     LC_ALL=C \
     LANG=C
 
-# Install base packages and do the build
+# Install build dependencies and do the build
 RUN \
-    apt-get update \
-&&  apt-get install -y build-essential autoconf git cpanminus unzip rrdtool librrds-perl libnet-ssleay-perl libssl-dev zlib1g-dev \
+    if [ -n "$APT_HTTP_PROXY" ]; then \
+        printf 'Acquire::http::Proxy "%s";\n' "${APT_HTTP_PROXY}" > /etc/apt/apt.conf.d/apt-proxy.conf; \
+    fi \
+&&  apt-get update \
+&&  apt-get install -y \
+    autoconf \
+    build-essential \
+    cpanminus \
+    git \
+    unzip \
 &&  apt-get clean \
-&&  rm -rf /var/lib/apt/lists/* /var/tmp/*
+&&  rm -rf /var/lib/apt/lists/* /var/tmp/* /etc/apt/apt.conf.d/apt-proxy.conf
 
 RUN \
     git clone https://github.com/rloomans/SmokePing.git \
@@ -82,13 +129,36 @@ RUN \
 # Install dependencies
 RUN \
     ./ookla-speedtest-cli-install.sh \
-&&  apt-get install -y apache2 libapache2-mod-fcgid rrdtool fping ssmtp syslog-ng fonts-dejavu iw time dnsutils iproute2 busybox tzdata apt-transport-https dirmngr speedtest python-is-python3 \
+&&  if [ -n "$APT_HTTP_PROXY" ]; then \
+        printf 'Acquire::http::Proxy "%s";\n' "${APT_HTTP_PROXY}" > /etc/apt/apt.conf.d/apt-proxy.conf; \
+    fi \
+&& apt-get install -y \
+    apache2 \
+    apt-transport-https \
+    busybox \
+    dirmngr \
+    dnsutils \
+    fonts-dejavu \
+    iproute2 \
+    iw \
+    libapache2-mod-fcgid \
+    nscd \
+    python-is-python3 \
+    speedtest \
+    ssmtp \
+    syslog-ng \
+    time \
+    tzdata \
 &&  apt-get autoremove -y \
 &&  apt-get clean \
-&&  rm -rf /var/lib/apt/lists/* /var/tmp/* \
+&&  rm -rf /var/lib/apt/lists/* /var/tmp/* /etc/apt/apt.conf.d/apt-proxy.conf \
 # Adjusting SyslogNG - see https://github.com/phusion/baseimage-docker/pull/223/commits/dda46884ed2b1b0f7667b9cc61a961e24e910784
 &&  sed -ie "s/^       system();$/#      system(); #This is to avoid calls to \/proc\/kmsg inside docker/g" /etc/syslog-ng/syslog-ng.conf \
 &&  rm /etc/ssmtp/ssmtp.conf
+
+RUN \
+    sed -i -e 's/\(enable-cache.*\)	yes$/\1 no/' /etc/nscd.conf \
+&&  sed -i -e 's/\(enable-cache.*hosts.*\) no$/\1 yes/' /etc/nscd.conf
 
 #Adding Custom files
 ADD init/ /etc/my_init.d/
