@@ -57,6 +57,8 @@ RUN \
 FROM base as build
 MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
 
+ARG APT_HTTP_PROXY
+
 # ========================================================================================
 # ====== SmokePing
 ENV \
@@ -97,6 +99,8 @@ RUN \
 # create the production image
 FROM base
 MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
+
+ARG APT_HTTP_PROXY
 
 # Some build ENV variables
 # LIBDIR looks like /usr/lib/x86_64-linux-gnu
