@@ -1,5 +1,5 @@
 FROM phusion/baseimage:jammy-1.0.1 as base
-MAINTAINER rloomans, https://github.com/rloomans/docker-phusion-baseimage
+MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
 
 ARG APT_HTTP_PROXY
 
