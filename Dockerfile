@@ -1,4 +1,4 @@
-FROM phusion/baseimage:jammy-1.0.3 as base
+FROM phusion/baseimage:jammy-1.0.4 as base
 MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
 
 ARG APT_HTTP_PROXY
