@@ -52,13 +52,13 @@ forks = 1
 step = 300
 offset = random
 
-+ YoutubeDL
-binary = /usr/local/bin/youtube-dl
-options = --no-part -f best
-timeout = 300
-forks   = 1
-step    = 3600
-pings   = 3
+# + YoutubeDL
+# binary = /usr/local/bin/youtube-dl
+# options = --no-part -f best
+# timeout = 300
+# forks   = 1
+# step    = 3600
+# pings   = 3
 
 + speedtest
 binary = /usr/local/bin/speedtest-cli

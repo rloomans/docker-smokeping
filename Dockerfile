@@ -1,5 +1,4 @@
-FROM phusion/baseimage:jammy-1.0.4 as base
-MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
+FROM phusion/baseimage:jammy-1.0.4 AS base
 
 ARG APT_HTTP_PROXY
 
@@ -27,10 +26,12 @@ RUN \
     fi \
 &&  apt-get update \
 &&  apt-get install -y \
+    ca-certificates \
     curl \
     dnsutils \
     fping \
     libauthen-radius-perl \
+    libc6-dev \
     libcgi-fast-perl \
     libconfig-grammar-perl \
     libdigest-hmac-perl \
@@ -45,17 +46,23 @@ RUN \
     librrds-perl \
     libsnmp-session-perl \
     libsocket6-perl \
+    libssl3 \
     libssl-dev \
     liburi-perl \
     libwww-perl \
     openssh-client \
+    perl \
+    perl-base \
     rrdtool \
+    zlib1g \
     zlib1g-dev \
 &&  apt-get clean \
 &&  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /etc/apt/apt.conf.d/apt-proxy.conf
 
-FROM base as build
-MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
+FROM base AS build
+LABEL maintainer="Robert Loomans <robert@loomans.org>"
+LABEL url="https://github.com/rloomans/docker-smokeping"
+LABEL source="https://github.com/rloomans/docker-smokeping.git"
 
 ARG APT_HTTP_PROXY
 
@@ -98,7 +105,9 @@ RUN \
 
 # create the production image
 FROM base
-MAINTAINER rloomans, https://github.com/rloomans/docker-smokeping
+LABEL maintainer="Robert Loomans <robert@loomans.org>"
+LABEL url="https://github.com/rloomans/docker-smokeping"
+LABEL source="https://github.com/rloomans/docker-smokeping.git"
 
 ARG APT_HTTP_PROXY
 
@@ -237,10 +246,11 @@ RUN \
         https://github.com/mad-ady/smokeping-wifi-param/raw/master/WifiParam.pm \
 &&  curl -L -o /usr/local/bin/speedtest-cli \
         https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py \
-&&  chmod a+x /usr/local/bin/speedtest-cli \
-&&  curl -L -o /usr/local/bin/youtube-dl \
-        https://yt-dl.org/downloads/latest/youtube-dl \
-&&  chmod a+x /usr/local/bin/youtube-dl
+&&  chmod a+x /usr/local/bin/speedtest-cli
+
+#&&  curl -L -o /usr/local/bin/youtube-dl \
+#        https://yt-dl.org/downloads/latest/youtube-dl \
+#&&  chmod a+x /usr/local/bin/youtube-dl
 
 # Use baseimage-docker's init system
 CMD ["/sbin/my_init"]
