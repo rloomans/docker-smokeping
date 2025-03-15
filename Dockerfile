@@ -1,4 +1,4 @@
-FROM phusion/baseimage:jammy-1.0.4 AS base
+FROM phusion/baseimage:noble-1.0.1 AS base
 
 ARG APT_HTTP_PROXY
 
@@ -119,7 +119,7 @@ ARG APT_HTTP_PROXY
 #   PERLDIR=$(perl -V | grep $LIBDIR/perl5/ | tail -1 | sed 's/ *//') \
 ENV \
     LIBDIR=/usr/lib/x86_64-linux-gnu \
-    PERLDIR=/usr/lib/x86_64-linux-gnu/perl5/5.34
+    PERLDIR=/usr/lib/x86_64-linux-gnu/perl5/5.38
 
 # Apache environment settings
 ENV \
@@ -157,7 +157,7 @@ RUN \
     libapache2-mod-fcgid \
     nscd \
     python-is-python3 \
-    speedtest \
+    speedtest-cli \
     ssmtp \
     syslog-ng \
     time \
