@@ -1,4 +1,4 @@
-FROM phusion/baseimage:noble-1.0.1 AS base
+FROM phusion/baseimage:noble-1.0.3 AS base
 
 ARG APT_HTTP_PROXY
 
