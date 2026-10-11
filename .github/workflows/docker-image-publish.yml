@@ -282,11 +282,29 @@ jobs:
           image: ${{ env.IMAGE }}
           args: --file=Dockerfile --sarif-file-output=snyk.sarif
 
+      - name: Upload raw Snyk SARIF artifact
+        if: env.SNYK_TOKEN != '' && hashFiles('snyk.sarif') != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: snyk-sarif-raw
+          path: snyk.sarif
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Remove null security severities from SARIF
         if: env.SNYK_TOKEN != '' && env.CAN_UPLOAD_SARIF == 'true' && hashFiles('snyk.sarif') != ''
         run: |
           jq 'walk(if type == "object" and (.properties | type) == "object" then .properties |= with_entries(select(.key != "security-severity" or .value != null)) else . end)' snyk.sarif > snyk.sarif.tmp
           mv snyk.sarif.tmp snyk.sarif
+
+      - name: Upload normalized Snyk SARIF artifact
+        if: env.SNYK_TOKEN != '' && env.CAN_UPLOAD_SARIF == 'true' && hashFiles('snyk.sarif') != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: snyk-sarif-normalized
+          path: snyk.sarif
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Upload Snyk scan results to GitHub Security tab
         if: env.SNYK_TOKEN != '' && env.CAN_UPLOAD_SARIF == 'true' && hashFiles('snyk.sarif') != ''
