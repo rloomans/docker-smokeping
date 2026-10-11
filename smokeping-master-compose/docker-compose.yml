@@ -24,8 +24,6 @@ services:
                   # the configuration directory -> /config
                   # map to an empty host directory to get generic configuration
                   - /opt/smokeping/etc:/config
-                  # the smokeping_secrets file (needed for master/slave)
-                  - /opt/smokeping/etc/smokeping_secrets:/etc/smokeping/etc/smokeping_secrets
                   # if you want web interface basic authentication add a
                   # .htaccess that points to a htpasswd generated file
                   - /opt/smokeping/apache/.htaccess:/var/www/html/smokeping/.htaccess
@@ -35,6 +33,6 @@ services:
           ports:
                   # on which host port should I expose the apache webserver
                   # (master only)
-                  - "33196:80"
+                  - "9500:80"
           restart: always
           network_mode: bridge
