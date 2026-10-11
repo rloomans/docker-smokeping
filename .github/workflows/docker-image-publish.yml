@@ -91,7 +91,13 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ env.PLATFORM_PAIR }}
           cache-to: type=gha,mode=max,scope=${{ env.PLATFORM_PAIR }}
-          outputs: type=image,"name=${{ env.DOCKERHUB_IMAGE }},${{ env.GHCR_IMAGE }}",push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }}
+          # Pull requests load the image locally for testing; other events push it by digest
+          outputs: ${{ github.event_name == 'pull_request' && 'type=docker,name=smoke-test:local' || format('type=image,"name={0},{1}",push-by-digest=true,name-canonical=true,push=true', env.DOCKERHUB_IMAGE, env.GHCR_IMAGE) }}
+
+      - name: Smoke test built image
+        env:
+          IMAGE: ${{ github.event_name == 'pull_request' && 'smoke-test:local' || format('{0}@{1}', env.GHCR_IMAGE, steps.build.outputs.digest) }}
+        run: bash tests/docker-smoke.sh "$IMAGE"
 
       - name: Export digest
         if: github.event_name != 'pull_request'
@@ -110,40 +116,11 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  smoke-test:
-    name: Smoke test Docker image
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-
-      - name: Build image for smoke test
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: .
-          platforms: linux/amd64
-          load: true
-          tags: smokeping-smoke-test:local
-          cache-from: type=gha,scope=smoke-test
-          cache-to: type=gha,mode=max,scope=smoke-test
-
-      - name: Start image and check SmokePing page
-        run: bash tests/docker-smoke.sh smokeping-smoke-test:local
-
   merge:
     name: Publish multi-arch manifest
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    needs: [build, smoke-test]
+    needs: build
 
     permissions:
       contents: read
