@@ -110,8 +110,8 @@ http://192.168.x.x:9500 would show you what's running INSIDE the container on po
 - `-p 80` - the port for the webUI
 - `-v /data` - Storage location for db and application data (graphs etc)
 - `-v /config` - Configure the `Targets` file here
-- `-e PGID` for GroupID - see below for explanation
-- `-e PUID` for UserID - see below for explanation
+- `-e PGID` for GroupID, default 1000 - see below for explanation
+- `-e PUID` for UserID, default 1000 - see below for explanation
 - `-e TZ` for timezone setting, eg Africa/Johannesburg
 - `-e SMOKEPING_EXTRA_FLAGS` to pass extra flags to smokeping (it's optional)
 - `-e SMOKEPING_MASTER_URL` for a URL to the master instance (causes this container to be a
@@ -125,8 +125,9 @@ do `docker exec -it smokeping-master /bin/bash`.
 
 Sometimes when using data volumes (`-v` flags) permissions issues can arise between the host OS
 and the container. We avoid this issue by allowing you to specify the user `PUID` and group
-`PGID`. Ensure the data volume directory on the host is owned by the same user you specify and it
-will "just work" <sup>TM</sup>.
+`PGID`. The smokeping daemon and the web server run as this user and group, and ownership of
+`/config` and `/data` is fixed up on startup. Both must be non-zero (Apache refuses to run as root).
+The only process that still runs as root is `nscd`.
 
 In this instance `PUID=1001` and `PGID=1001`. To find yours use `id dockeruser` as below:
 

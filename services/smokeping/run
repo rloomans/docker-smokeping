@@ -6,16 +6,16 @@ if [ ! -f /opt/smokeping/etc/smokeping_secrets ]; then
 	touch /opt/smokeping/etc/smokeping_secrets
 fi
 chmod 440 /opt/smokeping/etc/smokeping_secrets
-chown smokeping:www-data /opt/smokeping/etc/smokeping_secrets
+chown smokeping:smokeping /opt/smokeping/etc/smokeping_secrets
 
 if [ -n "$SMOKEPING_MASTER_URL" -a -n "$SMOKEPING_SHARED_SECRET" ]; then
 	logger -s -t $0 "Running smokeping as slave, connecting to $SMOKEPING_MASTER_URL"
 	echo "$SMOKEPING_SHARED_SECRET" > /etc/smokeping/secret
 	chmod 440 /etc/smokeping/secret
-	chown smokeping:www-data /etc/smokeping/secret
-	exec /opt/smokeping/bin/smokeping --config="/config/config" --master-url "$SMOKEPING_MASTER_URL" \
+	chown smokeping:smokeping /etc/smokeping/secret
+	exec chpst -u smokeping /opt/smokeping/bin/smokeping --config="/config/config" --master-url "$SMOKEPING_MASTER_URL" \
 		--shared-secret /etc/smokeping/secret --cache-dir /var/lib/smokeping --nodaemon $SMOKEPING_EXTRA_FLAGS
 else
 	logger -s -t $0 "Running smokeping as master"
-	exec /opt/smokeping/bin/smokeping --config="/config/config" --nodaemon $SMOKEPING_EXTRA_FLAGS
+	exec chpst -u smokeping /opt/smokeping/bin/smokeping --config="/config/config" --nodaemon $SMOKEPING_EXTRA_FLAGS
 fi

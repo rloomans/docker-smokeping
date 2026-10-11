@@ -1,2 +1,3 @@
 #!/bin/bash
-exec /usr/sbin/apache2ctl -D FOREGROUND
+# /etc/apache2/envvars hard-codes www-data, so override the user after the config is read
+exec /usr/sbin/apache2ctl -D FOREGROUND -c "User smokeping" -c "Group smokeping"
