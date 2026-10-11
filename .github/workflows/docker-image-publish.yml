@@ -286,7 +286,7 @@ jobs:
         if: env.SNYK_TOKEN != '' && hashFiles('snyk.sarif') != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: snyk-sarif-raw-attempt-${{ github.run_attempt }}
+          name: ${{ github.workflow }}-snyk-sarif-raw-attempt-${{ github.run_attempt }}
           path: snyk.sarif
           if-no-files-found: error
           retention-days: 1
@@ -301,7 +301,7 @@ jobs:
         if: env.SNYK_TOKEN != '' && env.CAN_UPLOAD_SARIF == 'true' && hashFiles('snyk.sarif') != ''
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: snyk-sarif-normalized-attempt-${{ github.run_attempt }}
+          name: ${{ github.workflow }}-snyk-sarif-normalized-attempt-${{ github.run_attempt }}
           path: snyk.sarif
           if-no-files-found: error
           retention-days: 1
