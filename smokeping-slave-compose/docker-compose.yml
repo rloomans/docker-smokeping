@@ -1,10 +1,9 @@
-version: "3.7"
 services:
   # container name
   slave:
           container_name: ${PROBENAME}-${SERVICE}
           # which image to pull
-          image: madady/smokeping-influx:latest
+          image: rloomans/smokeping-influx:latest
           # set a hostname so that master-slave communication works correctly
           hostname: ${PROBENAME}-${SERVICE}
           # pass data to the container as environment variables
@@ -24,4 +23,3 @@ services:
             - SMOKEPING_SHARED_SECRET=${SMOKEPASS}
           restart: always
           network_mode: bridge
-
