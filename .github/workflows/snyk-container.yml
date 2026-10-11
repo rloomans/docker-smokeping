@@ -57,6 +57,12 @@ jobs:
           image: ${{ env.IMAGE }}
           args: --file=Dockerfile --sarif-file-output=snyk.sarif
 
+      - name: Remove null security severities from SARIF
+        if: steps.snyk-token.outputs.available == 'true' && hashFiles('snyk.sarif') != ''
+        run: |
+          jq 'del(.runs[].tool.driver.rules[]? | select(.properties["security-severity"]? == null) | .properties["security-severity"]?)' snyk.sarif > snyk.sarif.tmp
+          mv snyk.sarif.tmp snyk.sarif
+
       - name: Upload result to GitHub Code Scanning
         if: steps.snyk-token.outputs.available == 'true' && hashFiles('snyk.sarif') != ''
         uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
