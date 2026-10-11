@@ -294,7 +294,7 @@ jobs:
       - name: Remove null security severities from SARIF
         if: env.SNYK_TOKEN != '' && env.CAN_UPLOAD_SARIF == 'true' && hashFiles('snyk.sarif') != ''
         run: |
-          jq 'walk(if type == "object" and (.properties | type) == "object" then .properties |= with_entries(select(.key != "security-severity" or .value != null)) else . end)' snyk.sarif > snyk.sarif.tmp
+          jq 'walk(if type == "object" and (.properties | type) == "object" then .properties |= with_entries(select(.key != "security-severity" or (.value != null and .value != "null"))) else . end)' snyk.sarif > snyk.sarif.tmp
           mv snyk.sarif.tmp snyk.sarif
 
       - name: Upload normalized Snyk SARIF artifact
