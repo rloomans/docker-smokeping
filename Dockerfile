@@ -259,6 +259,10 @@ RUN \
 # Use baseimage-docker's init system
 CMD ["/sbin/my_init"]
 
+# Check that the SmokePing web interface is responding.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5m --retries=3 \
+    CMD ["curl", "--fail", "--silent", "--output", "/dev/null", "http://localhost/smokeping/smokeping.fcgi"]
+
 # Volumes and Ports
 VOLUME /config
 VOLUME /data
