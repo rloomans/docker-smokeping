@@ -45,15 +45,8 @@ forks = 5
 pings = 3
 offset = random
 
-+ WifiParam
-binary = /sbin/iw
-pings = 3
-forks = 1
-step = 300
-offset = random
-
 # + YoutubeDL
-# binary = /usr/local/bin/youtube-dl
+# binary = /usr/local/bin/yt-dlp
 # options = --no-part -f best
 # timeout = 300
 # forks   = 1

@@ -1,41 +1,44 @@
-FROM phusion/baseimage:noble-1.0.3 AS base
+# syntax=docker/dockerfile:1
+FROM phusion/baseimage:resolute-1.0.20 AS base
 
 ARG APT_HTTP_PROXY
 
 ENV \
-    DEBIAN_FRONTEND="noninteractive" \
     HOME="/root" \
     TERM="xterm" \
     LC_ALL=C \
     LANG=C
 
 # Upgrade pre-installed packages
-RUN \
-    if [ -n "$APT_HTTP_PROXY" ]; then \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+&&  if [ -n "$APT_HTTP_PROXY" ]; then \
         printf 'Acquire::http::Proxy "%s";\n' "${APT_HTTP_PROXY}" > /etc/apt/apt.conf.d/apt-proxy.conf; \
     fi \
 &&  apt-get update \
-&&  apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" \
-&&  apt-get clean \
-&&  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /etc/apt/apt.conf.d/apt-proxy.conf
+&&  DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" \
+&&  rm -f /etc/apt/apt.conf.d/apt-proxy.conf \
+&&  rm -rf /tmp/* /var/tmp/*
 
 # Install common packages
-RUN \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     if [ -n "$APT_HTTP_PROXY" ]; then \
         printf 'Acquire::http::Proxy "%s";\n' "${APT_HTTP_PROXY}" > /etc/apt/apt.conf.d/apt-proxy.conf; \
     fi \
 &&  apt-get update \
-&&  apt-get install -y \
+&&  DEBIAN_FRONTEND=noninteractive apt-get install -y \
     ca-certificates \
     curl \
     dnsutils \
     fping \
     libauthen-radius-perl \
-    libc6-dev \
     libcgi-fast-perl \
     libconfig-grammar-perl \
     libdigest-hmac-perl \
     libio-socket-ssl-perl \
+    libio-tty-perl \
     libjs-cropper \
     libjs-prototype \
     libjs-scriptaculous \
@@ -47,7 +50,6 @@ RUN \
     libsnmp-session-perl \
     libsocket6-perl \
     libssl3 \
-    libssl-dev \
     liburi-perl \
     libwww-perl \
     openssh-client \
@@ -55,9 +57,8 @@ RUN \
     perl-base \
     rrdtool \
     zlib1g \
-    zlib1g-dev \
-&&  apt-get clean \
-&&  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /etc/apt/apt.conf.d/apt-proxy.conf
+&&  rm -f /etc/apt/apt.conf.d/apt-proxy.conf \
+&&  rm -rf /tmp/* /var/tmp/*
 
 FROM base AS build
 LABEL maintainer="Robert Loomans <robert@loomans.org>"
@@ -69,34 +70,55 @@ ARG APT_HTTP_PROXY
 # ========================================================================================
 # ====== SmokePing
 ENV \
-    DEBIAN_FRONTEND="noninteractive" \
     HOME="/root" \
     TERM="xterm" \
-    PERL_MM_USE_DEFAULT=1 \
     LC_ALL=C \
     LANG=C
 
 # Install build dependencies and do the build
-RUN \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     if [ -n "$APT_HTTP_PROXY" ]; then \
         printf 'Acquire::http::Proxy "%s";\n' "${APT_HTTP_PROXY}" > /etc/apt/apt.conf.d/apt-proxy.conf; \
     fi \
 &&  apt-get update \
-&&  apt-get install -y \
+&&  DEBIAN_FRONTEND=noninteractive apt-get install -y \
     autoconf \
     build-essential \
     cpanminus \
     git \
+    krb5-config \
+    libkrb5-dev \
+    libc6-dev \
+    libcrypt-dev \
+    libssl-dev \
     unzip \
-&&  apt-get clean \
-&&  rm -rf /var/lib/apt/lists/* /var/tmp/* /etc/apt/apt.conf.d/apt-proxy.conf
+    zlib1g-dev \
+&&  rm -f /etc/apt/apt.conf.d/apt-proxy.conf \
+&&  rm -rf /var/tmp/*
 
 RUN \
     git clone https://github.com/rloomans/SmokePing.git \
 &&  cd SmokePing \
 &&  ./bootstrap \
-&&  ./configure \
-&&  (make install || (cat /SmokePing/thirdparty/work/*/build.log; false)) \
+&&  ./configure
+
+# Pre-install Carton and raise cpanm's hard-coded 60s configure timeout. Carton clears
+# PERL_CPANM_OPT, and on timeout cpanm kills the whole process group (and the build),
+# which happens with slow module configure steps, e.g. under amd64 emulation.
+RUN \
+    cd SmokePing/thirdparty \
+&&  make bin/cpanm \
+&&  PERL_CPANM_OPT= PERL_CPANM_HOME=/SmokePing/thirdparty PERL_CARTON_PATH=/SmokePing/thirdparty \
+    perl bin/cpanm -q --notest --local-lib-contained /SmokePing/thirdparty/carton Carton \
+&&  sed -i 's/configure_timeout => 60,/configure_timeout => 600,/' \
+    carton/lib/perl5/Menlo/CLI/Compat.pm \
+&&  grep -q 'configure_timeout => 600' carton/lib/perl5/Menlo/CLI/Compat.pm
+
+RUN \
+    cd SmokePing \
+&&  (env TAR_OPTIONS="--no-same-owner --no-same-permissions" PERL_MM_USE_DEFAULT=1 make install \
+    || (cat /SmokePing/thirdparty/work/*/build.log; false)) \
 &&  mv htdocs/smokeping.fcgi.dist htdocs/smokeping.fcgi
 
 ###########################################################################################
@@ -104,56 +126,38 @@ RUN \
 ###########################################################################################
 
 # create the production image
-FROM base
+FROM base AS target
 LABEL maintainer="Robert Loomans <robert@loomans.org>"
 LABEL url="https://github.com/rloomans/docker-smokeping"
 LABEL source="https://github.com/rloomans/docker-smokeping.git"
 
 ARG APT_HTTP_PROXY
 
-# Some build ENV variables
-# LIBDIR looks like /usr/lib/x86_64-linux-gnu
-# PERLDIR looks like /usr/lib/x86_64-linux-gnu/perl5/5.26
-#ENV \
-#   LIBDIR=$(ldconfig -v 2>/dev/null | grep /usr/lib | head --lines=2 | tail -1 | sed 's/:$//') \
-#   PERLDIR=$(perl -V | grep $LIBDIR/perl5/ | tail -1 | sed 's/ *//') \
-ENV \
-    LIBDIR=/usr/lib/x86_64-linux-gnu \
-    PERLDIR=/usr/lib/x86_64-linux-gnu/perl5/5.38
-
 # Apache environment settings
 ENV \
-    DEBIAN_FRONTEND="noninteractive" \
     HOME="/root" \
     TERM="xterm" \
     APACHE_LOG_DIR="/var/log/apache2" \
     APACHE_LOCK_DIR="/var/lock/apache2" \
     APACHE_PID_FILE="/var/run/apache2.pid" \
-    PERL_MM_USE_DEFAULT=1 \
     PERL5LIB=/opt/smokeping/lib \
     LC_ALL=C \
     LANG=C
 
-# Fetch Ookla speedtest-cli installer - https://www.speedtest.net/apps/cli
-RUN \
-    curl -o ookla-speedtest-cli-install.sh https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh \
-&&  chmod +x ookla-speedtest-cli-install.sh
-
-# Install dependencies
-RUN \
-    ./ookla-speedtest-cli-install.sh \
-&&  if [ -n "$APT_HTTP_PROXY" ]; then \
+# Install runtime dependencies
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    if [ -n "$APT_HTTP_PROXY" ]; then \
         printf 'Acquire::http::Proxy "%s";\n' "${APT_HTTP_PROXY}" > /etc/apt/apt.conf.d/apt-proxy.conf; \
     fi \
-&& apt-get install -y \
+&& apt-get update \
+&& DEBIAN_FRONTEND=noninteractive apt-get install -y \
     apache2 \
-    apt-transport-https \
     busybox \
     dirmngr \
     dnsutils \
     fonts-dejavu \
     iproute2 \
-    iw \
     libapache2-mod-fcgid \
     nscd \
     python-is-python3 \
@@ -163,8 +167,8 @@ RUN \
     time \
     tzdata \
 &&  apt-get autoremove -y \
-&&  apt-get clean \
-&&  rm -rf /var/lib/apt/lists/* /var/tmp/* /etc/apt/apt.conf.d/apt-proxy.conf \
+&&  rm -f /etc/apt/apt.conf.d/apt-proxy.conf \
+&&  rm -rf /var/tmp/* \
 # Adjusting SyslogNG - see https://github.com/phusion/baseimage-docker/pull/223/commits/dda46884ed2b1b0f7667b9cc61a961e24e910784
 &&  sed -ie "s/^       system();$/#      system(); #This is to avoid calls to \/proc\/kmsg inside docker/g" /etc/syslog-ng/syslog-ng.conf \
 &&  rm /etc/ssmtp/ssmtp.conf
@@ -174,25 +178,25 @@ RUN \
 &&  sed -i -e 's/\(enable-cache.*hosts.*\) no$/\1 yes/' /etc/nscd.conf
 
 #Adding Custom files
-ADD init/ /etc/my_init.d/
-ADD services/ /etc/service/
-ADD Alerts /tmp/Alerts
-ADD Database /tmp/Database
-ADD General /tmp/General
-ADD Presentation /tmp/Presentation
-ADD Probes /tmp/Probes
-ADD Slaves /tmp/Slaves
-ADD Targets /tmp/Targets
-ADD pathnames /tmp/pathnames
-ADD ssmtp.conf /tmp/ssmtp.conf
-ADD config /tmp/config
+COPY init/ /etc/my_init.d/
+COPY services/ /etc/service/
+COPY Alerts /tmp/Alerts
+COPY Database /tmp/Database
+COPY General /tmp/General
+COPY Presentation /tmp/Presentation
+COPY Probes /tmp/Probes
+COPY Slaves /tmp/Slaves
+COPY Targets /tmp/Targets
+COPY pathnames /tmp/pathnames
+COPY ssmtp.conf /tmp/ssmtp.conf
+COPY config /tmp/config
 
 # Copy Smokeping that we previously built
 COPY --from=build /opt/smokeping-* /opt/smokeping
 
 # Copy Smokeping Perl modules that were bulilt previously
 RUN perl -V
-COPY --from=build ${PERLDIR}/ ${PERLDIR}/
+COPY --from=build /usr/lib/*-linux-gnu/perl5 /usr/lib/*-linux-gnu/perl5/
 
 # Copy smokemail, tmail, web interface
 COPY --from=build /SmokePing/etc/smokemail.dist /etc/smokeping/smokemail
@@ -201,7 +205,7 @@ COPY --from=build /SmokePing/etc/basepage.html.dist /etc/smokeping/basepage.html
 COPY --from=build /SmokePing/etc/config.dist /etc/smokeping/config
 COPY --from=build /SmokePing/VERSION /opt/smokeping
 
-ADD smokeping.conf /etc/apache2/sites-enabled/10-smokeping.conf
+COPY smokeping.conf /etc/apache2/sites-enabled/10-smokeping.conf
 
 RUN \
     mkdir /var/run/smokeping \
@@ -220,8 +224,8 @@ RUN \
 &&  ln -s /opt/smokeping/data /data \
 &&  chown -R smokeping:www-data /opt/smokeping/data
 
-ADD favicon.ico /var/www/html/
-ADD favicon.png /var/www/html/
+COPY favicon.ico /var/www/html/
+COPY favicon.png /var/www/html/
 
 RUN \
     chmod -v +x /etc/service/*/run \
@@ -236,21 +240,17 @@ COPY --from=build /SmokePing/htdocs/ /var/www/html/smokeping/
 # Add custom probes and dependencies
 
 RUN \
-    curl -L -o /opt/smokeping/lib/Smokeping/probes/speedtest.pm \
-        https://github.com/mad-ady/smokeping-speedtest/raw/master/speedtest.pm \
-&&  curl -L -o /opt/smokeping/lib/Smokeping/probes/speedtestcli.pm \
-        https://github.com/mad-ady/smokeping-speedtest/raw/master/speedtestcli.pm \
-&&  curl -L -o /opt/smokeping/lib/Smokeping/probes/YoutubeDL.pm \
-        https://github.com/mad-ady/smokeping-youtube-dl/raw/master/YoutubeDL.pm \
-&&  curl -L -o /opt/smokeping/lib/Smokeping/probes/WifiParam.pm \
-        https://github.com/mad-ady/smokeping-wifi-param/raw/master/WifiParam.pm \
-&&  curl -L -o /usr/local/bin/speedtest-cli \
+    curl -fsSL -o /opt/smokeping/lib/Smokeping/probes/speedtest.pm \
+        https://github.com/mad-ady/smokeping-speedtest/raw/2351623c5a0df46ad83270edf8f0f35eb8e3edb4/speedtest.pm \
+&&  curl -fsSL -o /opt/smokeping/lib/Smokeping/probes/YoutubeDL.pm \
+        https://github.com/mad-ady/smokeping-youtube-dl/raw/3dde65432641b3f948d33471c58b5076b1062f26/YoutubeDL.pm \
+&&  curl -fsSL -o /usr/local/bin/speedtest-cli \
         https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py \
-&&  chmod a+x /usr/local/bin/speedtest-cli
-
-#&&  curl -L -o /usr/local/bin/youtube-dl \
-#        https://yt-dl.org/downloads/latest/youtube-dl \
-#&&  chmod a+x /usr/local/bin/youtube-dl
+&&  chmod a+x /usr/local/bin/speedtest-cli \
+&&  curl -fsSL -o /usr/local/bin/yt-dlp \
+        https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
+&&  chmod a+x /usr/local/bin/yt-dlp \
+&&  ln -s yt-dlp /usr/local/bin/youtube-dl
 
 # Use baseimage-docker's init system
 CMD ["/sbin/my_init"]

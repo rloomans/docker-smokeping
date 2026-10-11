@@ -1,13 +1,12 @@
 # mad-ady/smokeping - based on magicdud4eva/smokeping
 
-Smokeping keeps track of your network latency. For a full example of what this application is capable of visit [UCDavis](http://smokeping.ucdavis.edu/cgi-bin/smokeping.fcgi). The Smokeping Docker image includes the latest version of Smokeping, speedtest-cli, Ookla's speedtestcli client, youtube-dl. It's suitable to run as master/slave. Default configuration needs tweaking, but should allow you to run out of the box.
+Smokeping keeps track of your network latency. For a full example of what this application is capable of visit [UCDavis](http://smokeping.ucdavis.edu/cgi-bin/smokeping.fcgi). The Smokeping Docker image includes the latest version of Smokeping, speedtest-cli, youtube-dl. It's suitable to run as master/slave. Default configuration needs tweaking, but should allow you to run out of the box.
 
 ![Smokeping Docker](https://github.com/magicdude4eva/docker-smokeping/raw/master/docker-smokeping.png)
 
 ## TL;DR - Features
 * Private Smokeping branch (https://github.com/mad-ady/SmokePing)
 * Speedtest probe (https://github.com/mad-ady/smokeping-speedtest / https://github.com/sivel/speedtest-cli)
-* Speedtestcli probe (for Ookla's speedtest client)
 * Youtube-dl probe (https://github.com/mad-ady/smokeping-youtube-dl)
 * Working configuration for DNS, Speedtest and web-site probes
 * Ability to run as a slave
