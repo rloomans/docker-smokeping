@@ -91,11 +91,15 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     libkrb5-dev \
     libc6-dev \
     libcrypt-dev \
+    libarchive-tools \
     libssl-dev \
     unzip \
     zlib1g-dev \
 &&  rm -f /etc/apt/apt.conf.d/apt-proxy.conf \
-&&  rm -rf /var/tmp/*
+&&  rm -rf /var/tmp/* \
+# GNU tar 1.35 fails with "Function not implemented" under Rosetta amd64 emulation.
+# cpanm uses the first tar on PATH, so shadow it with bsdtar in this build stage only.
+&&  ln -s /usr/bin/bsdtar /usr/local/bin/tar
 
 RUN \
     git clone https://github.com/rloomans/SmokePing.git \
@@ -117,8 +121,8 @@ RUN \
 
 RUN \
     cd SmokePing \
-&&  (env TAR_OPTIONS="--no-same-owner --no-same-permissions" PERL_MM_USE_DEFAULT=1 make install \
-    || (cat /SmokePing/thirdparty/work/*/build.log; false)) \
+&&  (PERL_MM_USE_DEFAULT=1 make install \
+     || (cat thirdparty/work/*/build.log; false)) \
 &&  mv htdocs/smokeping.fcgi.dist htdocs/smokeping.fcgi
 
 ###########################################################################################
