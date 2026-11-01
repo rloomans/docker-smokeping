@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM phusion/baseimage:resolute-1.0.22 AS base
+FROM phusion/baseimage:resolute-1.0.23 AS base
 
 ARG APT_HTTP_PROXY
 
