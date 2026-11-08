@@ -244,14 +244,14 @@ COPY --from=build /SmokePing/htdocs/ /var/www/html/smokeping/
 # Add custom probes and dependencies
 
 RUN \
-    curl -fsSL -o /opt/smokeping/lib/Smokeping/probes/speedtest.pm \
+    curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /opt/smokeping/lib/Smokeping/probes/speedtest.pm \
         https://github.com/mad-ady/smokeping-speedtest/raw/2351623c5a0df46ad83270edf8f0f35eb8e3edb4/speedtest.pm \
-&&  curl -fsSL -o /opt/smokeping/lib/Smokeping/probes/YoutubeDL.pm \
+&&  curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /opt/smokeping/lib/Smokeping/probes/YoutubeDL.pm \
         https://github.com/mad-ady/smokeping-youtube-dl/raw/3dde65432641b3f948d33471c58b5076b1062f26/YoutubeDL.pm \
-&&  curl -fsSL -o /usr/local/bin/speedtest-cli \
+&&  curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /usr/local/bin/speedtest-cli \
         https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py \
 &&  chmod a+x /usr/local/bin/speedtest-cli \
-&&  curl -fsSL -o /usr/local/bin/yt-dlp \
+&&  curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /usr/local/bin/yt-dlp \
         https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
 &&  chmod a+x /usr/local/bin/yt-dlp \
 &&  ln -s yt-dlp /usr/local/bin/youtube-dl
