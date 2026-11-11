@@ -282,11 +282,11 @@ jobs:
           image: ${{ env.IMAGE }}
           args: --file=Dockerfile --sarif-file-output=snyk.sarif
 
-      - name: Remove null security severities from SARIF
+      - name: Normalize Snyk SARIF
         if: env.SNYK_TOKEN != '' && env.CAN_UPLOAD_SARIF == 'true' && hashFiles('snyk.sarif') != ''
         run: |
           cp snyk.sarif snyk.sarif.raw
-          jq 'walk(if type == "object" and (.properties | type) == "object" then .properties |= with_entries(select(.key != "security-severity" or (.value != null and .value != "null"))) else . end)' snyk.sarif > snyk.sarif.tmp
+          jq -f .github/scripts/normalize-snyk-sarif.jq snyk.sarif > snyk.sarif.tmp
           mv snyk.sarif.tmp snyk.sarif
 
       - name: Upload Snyk scan results to GitHub Security tab
