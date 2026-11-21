@@ -9,7 +9,7 @@ This image includes Smokeping, the `speedtest-cli` Python client, and `yt-dlp` (
 `youtube-dl` for compatibility with the YoutubeDL probe). It can run as a master or slave. The
 default configuration needs tweaking, but should allow you to run out of the box.
 
-![Smokeping Docker](https://github.com/magicdude4eva/docker-smokeping/raw/master/docker-smokeping.png)
+![Smokeping Docker](https://github.com/rloomans/docker-smokeping/raw/main/docker-smokeping.png)
 
 ## TL;DR - Features
 
